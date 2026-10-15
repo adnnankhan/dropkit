@@ -70,3 +70,7 @@ npm test
 | `listing/` | Figma Community listing draft, privacy policy, review checklist, icon |
 | `PROMPTS.md`, `CLAUDE.md`, `HANDOFF.md` | How the plugin was built, step by step |
 | `reference/` | The earlier Nudge plugins, for reference |
+
+## License
+
+[MIT](LICENSE) © 2026 Adnan Asif Khan

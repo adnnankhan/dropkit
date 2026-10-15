@@ -1,6 +1,6 @@
 # Privacy policy — Dropkit
 
-Last updated: [date of publishing]
+Last updated: 15 October 2026
 
 Dropkit is a Figma plugin made by Adnan Asif Khan.
 
@@ -13,10 +13,7 @@ Dropkit is a Figma plugin made by Adnan Asif Khan.
 - It has no accounts, no analytics and no tracking.
 - It reads your open file only to look up names it needs, for example whether a component already exists. It changes your file only when you press Build, and only to create what you ticked.
 
-**Text you copy:** "Copy instructions", "Copy problems for your AI" and "Copy report" put text on your clipboard. What you do with that text, such as pasting it into an AI, is up to you and is covered by that service's own privacy policy.
+**Text you copy:** "Copy instructions", "Copy error for your AI", "Copy problems for your AI" and "Copy report" put text on your clipboard. What you do with that text, such as pasting it into an AI, is up to you and is covered by that service's own privacy policy.
 
 **Questions:** https://github.com/adnnankhan/dropkit/issues
 
----
-
-*Draft. Not legal advice. Figma's guidelines recommend having a lawyer check your obligations before publishing.*

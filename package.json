@@ -1,9 +1,10 @@
 {
   "name": "dropkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "A plugin for Figma that builds a design from a JSON file.",
+  "license": "MIT",
   "scripts": {
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",

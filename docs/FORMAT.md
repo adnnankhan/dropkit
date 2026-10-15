@@ -296,7 +296,7 @@ The prototype has two lists: `links` between screens, and `componentLinks` that 
 | `duration` | ms, default 300 |
 | `easing` | `linear`, `easeIn`, `easeOut` (default), `easeInOut`, `gentle`, `quick`, `bouncy` or `slow` |
 
-**Overlays** can also set `position` (`center`, `top`, `bottom`), `closeOnOutside` (`true` or `false`) and `background` (a colour with opacity, e.g. `"#00000066"`).
+**Overlays** can also set `position` (`center`, `top`, `bottom`), `closeOnOutside` (`true` or `false`) and `background` (a colour with opacity, e.g. `"#00000066"`). Figma doesn’t let plugins set these three, so the plugin builds the overlay link and the report reminds you to set them by hand in Figma’s Prototype panel.
 
 Smart animate moves layers that have the same name on both screens, so name layers carefully.
 
