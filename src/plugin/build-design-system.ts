@@ -15,7 +15,8 @@ export async function buildDesignSystem(ds: Json, run: PartRun): Promise<void> {
   const names = Object.keys(colors);
   if (names.length) {
     const wanted = modeNames(ds, colors);
-    const { collection, modes, leftOut } = await colorCollection(ctx, wanted);
+    const { collection, modes, leftOut, note } = await colorCollection(ctx, wanted);
+    if (note) run.warn(note);
     if (leftOut.length) {
       run.warn(`Colours were built with ${quoteList(modes.map((m) => m.name))} only. Figma’s free plan allows one mode per collection, so ${quoteList(leftOut)} ${leftOut.length === 1 ? 'needs' : 'need'} a paid Figma plan.`);
     }
@@ -71,16 +72,11 @@ export async function buildDesignSystem(ds: Json, run: PartRun): Promise<void> {
   for (const [name, value] of Object.entries(isObject(ds.gradients) ? ds.gradients : {})) {
     await run.item(`gradient:${name}`, name, async () => {
       if (ctx.paintStyles.has(name)) return 'already';
-      const { paint, unlinked } = gradientPaint(ctx, value as Json);
       const style = figma.createPaintStyle();
       try {
         style.name = name;
-        style.paints = [paint];
-        if (unlinked && !gradientLinksStuck(style.paints[0])) {
-          // Figma didn't keep the links: FORMAT.md says to use the colour values then.
-          style.paints = [gradientPaint(ctx, value as Json, false).paint];
-          run.warn(`Gradient “${name}” uses colour values, not linked variables: Figma doesn’t keep variable links on gradient stops.`);
-        }
+        const kept = setGradient(ctx, value as Json, (paint) => (style.paints = [paint]), () => style.paints[0]);
+        if (!kept) run.warn(`Gradient “${name}” uses colour values, not linked variables: Figma doesn’t keep variable links on gradient stops.`);
       } catch (error) {
         style.remove();
         throw error;
@@ -106,7 +102,8 @@ export async function buildDesignSystem(ds: Json, run: PartRun): Promise<void> {
         style.lineHeight = typeof t.lineHeight === 'number' ? { unit: 'PIXELS', value: t.lineHeight } : { unit: 'AUTO' };
         style.letterSpacing = { unit: 'PIXELS', value: typeof t.letterSpacing === 'number' ? t.letterSpacing : 0 };
         if (t.case) style.textCase = ({ upper: 'UPPER', lower: 'LOWER', title: 'TITLE' } as const)[t.case as 'upper'] ?? 'ORIGINAL';
-        if (t.decoration) style.textDecoration = t.decoration === 'underline' ? 'UNDERLINE' : 'STRIKETHROUGH';
+        if (t.decoration === 'underline') style.textDecoration = 'UNDERLINE';
+        if (t.decoration === 'strikethrough') style.textDecoration = 'STRIKETHROUGH';
       } catch (error) {
         style.remove();
         throw error;
@@ -153,27 +150,46 @@ function modeNames(ds: Json, colors: Json): string[] {
 }
 
 /**
- * The Colors collection with the wanted modes. Renames the first mode of a new collection,
- * then adds the others. When Figma refuses a mode (free plan), it is left out, never worked around.
+ * The Colors collection with the wanted modes. A new collection gets its first mode renamed;
+ * the others are added. When Figma refuses a mode (free plan), it is left out, never worked
+ * around. In a collection already in the file that has none of the wanted modes, Figma's
+ * untouched "Mode 1" is renamed; any other first mode takes the first wanted mode's values.
  */
 async function colorCollection(ctx: BuildContext, wanted: string[]) {
   let collection = ctx.collections.get(COLLECTIONS.colors);
+  const ids = new Map<string, string>();
+  let note = '';
   if (!collection) {
     collection = figma.variables.createVariableCollection(COLLECTIONS.colors);
     ctx.collections.set(COLLECTIONS.colors, collection);
     if (wanted.length) collection.renameMode(collection.defaultModeId, wanted[0]);
+  } else if (wanted.length && !collection.modes.some((m) => wanted.includes(m.name))) {
+    const first = collection.modes[0];
+    if (first.name === 'Mode 1') collection.renameMode(first.modeId, wanted[0]);
+    else {
+      ids.set(wanted[0], first.modeId);
+      note = `The Colors collection already in the file has the mode “${first.name}”, so the “${wanted[0]}” values went there.`;
+    }
   }
   const leftOut: string[] = [];
   for (const name of wanted) {
-    if (collection.modes.some((m) => m.name === name)) continue;
+    if (ids.has(name)) continue;
+    const found = collection.modes.find((m) => m.name === name);
+    if (found) {
+      ids.set(name, found.modeId);
+      continue;
+    }
     try {
-      collection.addMode(name);
+      ids.set(name, collection.addMode(name));
     } catch {
       leftOut.push(name);
     }
   }
-  const modes = wanted.length ? collection.modes.filter((m) => wanted.includes(m.name)) : [collection.modes[0]];
-  return { collection, modes: modes.length ? modes : [collection.modes[0]], leftOut };
+  const modes = wanted.length
+    ? wanted.filter((name) => ids.has(name)).map((name) => ({ name, modeId: ids.get(name)! }))
+    : [{ name: collection.modes[0].name, modeId: collection.modes[0].modeId }];
+  for (const mode of modes) ctx.colorModes.set(mode.name, mode.modeId);
+  return { collection, modes, leftOut, note };
 }
 
 function collectionNamed(ctx: BuildContext, name: string): VariableCollection {
@@ -196,7 +212,7 @@ function colourValue(ctx: BuildContext, value: string): VariableValue {
  * A gradient paint. Stops that name a colour variable are linked to it when `link` is true.
  * Angles follow CSS: 90 runs left to right, 180 top to bottom.
  */
-export function gradientPaint(ctx: BuildContext, g: Json, link = true): { paint: GradientPaint; unlinked: boolean } {
+export function gradientPaint(ctx: BuildContext, g: Json, link = true): { paint: GradientPaint; linked: boolean } {
   const type = ({ linear: 'GRADIENT_LINEAR', radial: 'GRADIENT_RADIAL', angular: 'GRADIENT_ANGULAR' } as const)[g.type as 'linear'];
   const theta = (((typeof g.angle === 'number' ? g.angle : 90) - 90) * Math.PI) / 180;
   const cos = Math.cos(theta);
@@ -211,7 +227,7 @@ export function gradientPaint(ctx: BuildContext, g: Json, link = true): { paint:
           [1, 0, 0],
           [0, 1, 0],
         ];
-  let unlinked = false;
+  let linked = false;
   const stops: ColorStop[] = (g.stops as Json[]).map((stop) => {
     const value = stop.color as string;
     if (isHexColor(value)) return { position: stop.at as number, color: hexToRgba(value) };
@@ -219,13 +235,34 @@ export function gradientPaint(ctx: BuildContext, g: Json, link = true): { paint:
     if (!variable) throw new Missing('colour', value);
     const color = ctx.colorValue(variable);
     if (!link) return { position: stop.at as number, color };
-    unlinked = true;
+    linked = true;
     return { position: stop.at as number, color, boundVariables: { color: figma.variables.createVariableAlias(variable) } };
   });
-  return { paint: { type, gradientTransform: transform, gradientStops: stops }, unlinked };
+  return { paint: { type, gradientTransform: transform, gradientStops: stops }, linked };
 }
 
-/** True when Figma kept every variable link we put on the gradient stops. */
+/**
+ * Sets a gradient with its stops linked to colour variables. Whether Figma keeps links on
+ * gradient stops is an open question in FORMAT.md, so: try, read it back, and when Figma
+ * drops or refuses the links, use the colour values. Returns false when it fell back.
+ */
+export function setGradient(ctx: BuildContext, g: Json, write: (paint: GradientPaint) => void, read: () => Paint): boolean {
+  const { paint, linked } = gradientPaint(ctx, g);
+  if (!linked) {
+    write(paint);
+    return true;
+  }
+  try {
+    write(paint);
+    if (gradientLinksStuck(read())) return true;
+  } catch {
+    // Figma refused the links; use the colour values below.
+  }
+  write(gradientPaint(ctx, g, false).paint);
+  return false;
+}
+
+/** True when Figma kept any of the variable links we put on the gradient stops. */
 export function gradientLinksStuck(paint: Paint): boolean {
   if (!('gradientStops' in paint)) return false;
   return paint.gradientStops.some((s) => s.boundVariables?.color);

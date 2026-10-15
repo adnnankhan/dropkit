@@ -4,13 +4,15 @@ import { plural } from '../shared/format.ts';
 import { COLLECTIONS, PAGES } from './context.ts';
 import { buildLayer, type LayerScope } from './layers.ts';
 import { rightOf } from './place.ts';
-import type { PartRun } from './run.ts';
+import { notBuildable, type PartRun } from './run.ts';
 
 type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const GAP = 80;
 
-export async function buildScreens(screens: Json[], svgs: Map<string, Json>, run: PartRun): Promise<void> {
+/** `screens` is the list as written, so item numbers match the checker's. */
+export async function buildScreens(screens: unknown[], svgs: Map<string, Json>, run: PartRun): Promise<void> {
   const { ctx } = run;
   const { page, warning } = await ctx.page(PAGES.screens);
   if (warning) run.warn(warning);
@@ -19,7 +21,11 @@ export async function buildScreens(screens: Json[], svgs: Map<string, Json>, run
   let built = 0;
 
   for (const [i, screen] of screens.entries()) {
-    const name = screen.name as string;
+    if (!isObject(screen) || typeof screen.name !== 'string') {
+      await run.item(`screen#${i}`, `Screen ${i + 1}`, notBuildable);
+      continue;
+    }
+    const name = screen.name;
     const key = run.isSkipped(`screen#${i}`) ? `screen#${i}` : `screen:${name}`;
     await run.item(key, name, async () => {
       if (ctx.screens.has(name)) return 'already';
@@ -53,11 +59,11 @@ export async function buildScreens(screens: Json[], svgs: Map<string, Json>, run
 function setMode(frame: FrameNode, mode: unknown, run: PartRun): void {
   if (typeof mode !== 'string') return;
   const collection = run.ctx.collections.get(COLLECTIONS.colors);
-  const found = collection?.modes.find((m) => m.name === mode);
-  if (!collection || !found) {
+  const modeId = run.ctx.colorModes.get(mode) ?? collection?.modes.find((m) => m.name === mode)?.modeId;
+  if (!collection || !modeId) {
     const first = collection?.modes[0]?.name;
     run.warn(`Screen “${frame.name}” is set to “${mode}”, but the file has no “${mode}” colour mode${first ? `, so it shows “${first}”` : ''}. On Figma’s free plan, colours have one mode only.`);
     return;
   }
-  if (found.modeId !== collection.defaultModeId) frame.setExplicitVariableModeForCollection(collection, found.modeId);
+  if (modeId !== collection.defaultModeId) frame.setExplicitVariableModeForCollection(collection, modeId);
 }

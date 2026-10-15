@@ -261,6 +261,14 @@ describe('build: problems', () => {
     assert.ok(part(report, 'designSystem').warnings.some((w) => /Brand\/Sunrise.*colour values/.test(w)));
   });
 
+  it('when Figma refuses gradient links, the colour values are used, with a warning', async () => {
+    const { mock, report } = await runBuild(example(), { mock: withMock({ gradientLinks: 'refuse' }) });
+    const style = mock.styles.find((s) => s.name === 'Brand/Sunrise');
+    assert.equal(style.paints[0].gradientStops[0].boundVariables, undefined);
+    assert.deepEqual(part(report, 'designSystem').skipped, []);
+    assert.ok(part(report, 'designSystem').warnings.some((w) => /Brand\/Sunrise.*colour values/.test(w)));
+  });
+
   it('a font that isn’t installed falls back to Inter, with a warning', async () => {
     const data = example();
     data.designSystem.textStyles.Title.font = 'Nope Sans';
@@ -271,12 +279,16 @@ describe('build: problems', () => {
 
   it('an item Figma refuses is skipped and removed; the rest is built (lesson 11)', async () => {
     const data = example();
-    data.screens[0].children[0].truncate = 1.5; // maxLines must be a whole number
-    const { mock, report } = await runBuild(data);
+    data.screens[0].children.push({ type: 'ellipse', name: 'Dot', width: 8, height: 8 });
+    const mock = createMockFigma();
+    (mock.figma as Any).createEllipse = () => {
+      throw new Error('in createEllipse: refused');
+    };
+    const { report } = await runBuild(data, { mock });
     const screens = part(report, 'screens');
     assert.deepEqual(screens.skipped.map((s) => s.name), ['Tasks']);
     assert.equal(screens.skipped[0].reason, 'Figma couldn’t build it.');
-    assert.match(screens.skipped[0].detail!, /maxLines/);
+    assert.match(screens.skipped[0].detail!, /refused/);
     assert.equal(byName(mock, 'Tasks', 'FRAME'), undefined, 'nothing half-made');
     assert.ok(byName(mock, 'New task', 'FRAME'));
   });
@@ -325,5 +337,109 @@ describe('build: only some parts ticked', () => {
     assert.deepEqual(screens.built, []);
     assert.equal(screens.skipped.length, 2);
     assert.match(screens.skipped[0].reason, /in the JSON but isn’t in the file yet/);
+  });
+});
+
+describe('build: fixes from the code review', () => {
+  const screen = (children: Any[]) => ({ format: 'dropkit/0.1', screens: [{ name: 'S', width: 400, height: 800, children }] });
+
+  it('a component with only a width hugs its content height', async () => {
+    const data = {
+      format: 'dropkit/0.1',
+      components: [{ name: 'Card', base: { type: 'frame', layout: 'column', width: 343, padding: 16, children: [{ type: 'rect', name: 'Box', width: 10, height: 40 }] } }],
+    };
+    const { mock, report } = await runBuild(data, { ticked: ['components'] });
+    assert.deepEqual(part(report, 'components').built, ['Card']);
+    const card = byName(mock, 'Card', 'COMPONENT');
+    assert.equal(card.layoutSizingVertical, 'HUG');
+    assert.equal(card.width, 343);
+  });
+
+  it('values the checker ignores don’t break the build', async () => {
+    const data = screen([
+      { type: 'frame', name: 'A', layout: 'row', padding: [8, 16, 8], gap: null, radius: [4, 4, 4], opacity: 50, stroke: { color: '#000000', dash: ['a'] } },
+      { type: 'text', name: 'T', text: 'Hi', truncate: 0, decoration: 'none' },
+    ]);
+    const { mock, report } = await runBuild(data, { ticked: ['screens'] });
+    assert.deepEqual(part(report, 'screens').skipped, []);
+    const a = byName(mock, 'A', 'FRAME');
+    assert.equal(a.paddingTop, 0);
+    assert.equal(a.opacity, 1);
+    assert.deepEqual(a.dashPattern, []);
+    const t = byName(mock, 'T', 'TEXT');
+    assert.equal(t.textDecoration, 'NONE', '"none" isn’t strikethrough');
+    assert.equal(t.textTruncation, 'DISABLED');
+  });
+
+  it('null removes a value', async () => {
+    const data = screen([{ type: 'frame', name: 'A', layout: 'row', gap: null, padding: null, radius: null, stroke: null, fill: null }]);
+    const { mock, report } = await runBuild(data, { ticked: ['screens'] });
+    assert.deepEqual(part(report, 'screens').skipped, []);
+    const a = byName(mock, 'A', 'FRAME');
+    assert.equal(a.itemSpacing, 0);
+    assert.deepEqual(a._fills, []);
+  });
+
+  it('an existing Colors collection with “Mode 1” is renamed; with another mode, values go there', async () => {
+    for (const [existing, expected] of [['Mode 1', 'Light'], ['Default', 'Default']] as const) {
+      const mock = createMockFigma({ plan: 'free' });
+      const colors = (mock.figma as Any).variables.createVariableCollection('Colors');
+      colors.renameMode(colors.defaultModeId, existing);
+      const { report } = await runBuild(example(), { mock, ticked: ['designSystem'] });
+      assert.deepEqual(colors.modes.map((m: Any) => m.name), [expected]);
+      const bg = variable(mock, 'bg/primary');
+      assert.deepEqual(bg.valuesByMode[colors.defaultModeId], { r: 1, g: 1, b: 1, a: 1 }, `${existing}: the Light value`);
+      assert.deepEqual(part(report, 'designSystem').skipped, []);
+      if (existing === 'Default') assert.ok(part(report, 'designSystem').warnings.some((w) => /has the mode “Default”, so the “Light” values went there/.test(w)));
+    }
+  });
+
+  it('a text style in the file whose font isn’t installed: Inter, a warning, and the screen is built', async () => {
+    const mock = createMockFigma();
+    const style = (mock.figma as Any).createTextStyle();
+    style.name = 'Display';
+    style._font = { family: 'SF Pro', style: 'Bold' };
+    const { report } = await runBuild(screen([{ type: 'text', name: 'Hello', text: 'Hi', textStyle: 'Display' }]), { mock, ticked: ['screens'] });
+    assert.deepEqual(part(report, 'screens').built, ['S']);
+    assert.ok(part(report, 'screens').warnings.some((w) => /“Display” uses the font “SF Pro Bold”, which isn’t installed, so “Hello” uses Inter/.test(w)));
+    assert.deepEqual(byName(mock, 'Hello', 'TEXT').fontName, { family: 'Inter', style: 'Regular' });
+  });
+
+  it('Stop works during the design system too', async () => {
+    const { report } = await runBuild(example(), { stopWhen: (detail) => detail.includes('“bg/primary”') });
+    const ds = part(report, 'designSystem');
+    assert.equal(report.stopped, true);
+    assert.deepEqual(ds.built, ['brand/500', 'bg/primary']);
+    assert.ok(ds.skipped.length > 10 && ds.skipped.every((s) => s.reason === 'Stopped before it was built.'));
+  });
+
+  it('a link that isn’t a { } block is skipped; the other links are built', async () => {
+    const data = example();
+    data.prototype.links.unshift(null);
+    const { report } = await runBuild(data);
+    const links = part(report, 'prototype');
+    assert.deepEqual(links.skipped.map((s) => s.name), ['Link 1']);
+    assert.equal(links.built.length, 6);
+  });
+
+  it('a component link with a missing layer adds no links at all', async () => {
+    const data = example();
+    data.prototype.componentLinks[0].layer = 'Box';
+    data.prototype.componentLinks[1].layer = 'Nope';
+    const { mock, report } = await runBuild(data);
+    const set = byName(mock, 'Checkbox', 'COMPONENT_SET');
+    const [, on] = set._children;
+    assert.deepEqual(on.reactions, []);
+    assert.ok(part(report, 'prototype').skipped.some((s) => /Off/.test(s.name)));
+  });
+
+  it('the start screen comes first in the prototype’s flows', async () => {
+    const mock = createMockFigma();
+    await runBuild(example(), { mock });
+    const page = mock.page('Screens');
+    const data = example();
+    data.prototype.start = 'New task';
+    await runBuild(data, { mock });
+    assert.deepEqual(page.flowStartingPoints.map((f: Any) => f.name), ['New task', 'Tasks']);
   });
 });

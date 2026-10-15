@@ -59,5 +59,8 @@ function describeComponent(node: ComponentNode | ComponentSetNode): ExistingComp
     else if (def.type === 'BOOLEAN') props[propName(key)] = 'boolean';
     else if (def.type === 'INSTANCE_SWAP') props[propName(key)] = 'swap';
   }
-  return { name: node.name, variants, props };
+  const combos = node.type === 'COMPONENT_SET'
+    ? node.children.filter((c): c is ComponentNode => c.type === 'COMPONENT').map((c) => ({ ...(c.variantProperties ?? {}) }))
+    : undefined;
+  return { name: node.name, variants, props, combos };
 }

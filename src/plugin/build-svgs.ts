@@ -4,14 +4,16 @@ import { plural } from '../shared/format.ts';
 import { PAGES } from './context.ts';
 import { svgNode } from './layers.ts';
 import { below } from './place.ts';
-import type { PartRun } from './run.ts';
+import { notBuildable, type PartRun } from './run.ts';
 
 type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const CELL = 64;
 const PER_ROW = 8;
 
-export async function buildSvgs(svgs: Json[], run: PartRun): Promise<void> {
+/** `svgs` is the list as written, so item numbers match the checker's. */
+export async function buildSvgs(svgs: unknown[], run: PartRun): Promise<void> {
   const { ctx } = run;
   const { page, warning } = await ctx.page(PAGES.components);
   if (warning) run.warn(warning);
@@ -21,7 +23,11 @@ export async function buildSvgs(svgs: Json[], run: PartRun): Promise<void> {
   let graphics = 0;
 
   for (const [i, svg] of svgs.entries()) {
-    const name = svg.name as string;
+    if (!isObject(svg) || typeof svg.name !== 'string') {
+      await run.item(`svg#${i}`, `SVG ${i + 1}`, notBuildable);
+      continue;
+    }
+    const name = svg.name;
     const key = run.isSkipped(`svg#${i}`) ? `svg#${i}` : `svg:${name}`;
     await run.item(key, name, async () => {
       const asComponent = svg.component !== false;
@@ -35,7 +41,13 @@ export async function buildSvgs(svgs: Json[], run: PartRun): Promise<void> {
       }
       page.appendChild(node);
       if (asComponent) {
-        const component = figma.createComponentFromNode(node);
+        let component: ComponentNode;
+        try {
+          component = figma.createComponentFromNode(node);
+        } catch (error) {
+          node.remove(); // nothing is left half-made
+          throw error;
+        }
         ctx.components.set(name, component);
         node = component;
         icons++;

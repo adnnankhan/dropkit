@@ -18,6 +18,9 @@ export interface Report {
   fileName: string;
   stopped: boolean;
   parts: PartReport[];
+  /** Set when the whole build failed, in plain words. detail: the technical message, for the copied report. */
+  error?: string;
+  detail?: string;
 }
 
 export function emptyPart(part: Part): PartReport {
@@ -26,6 +29,7 @@ export function emptyPart(part: Part): PartReport {
 
 /** "Built 5 parts" / "Built 3 of 5 parts" / "Nothing new to build" */
 export function reportTitle(report: Report): string {
+  if (report.error) return 'Build stopped';
   const built = report.parts.reduce((n, p) => n + p.built.length, 0);
   const already = report.parts.reduce((n, p) => n + p.alreadyInFile.length, 0);
   if (built === 0 && already > 0 && !report.stopped) return 'Nothing new to build';
@@ -36,6 +40,7 @@ export function reportTitle(report: Report): string {
 
 /** "From tasks-app.json · nothing skipped" */
 export function reportSubtitle(report: Report): string {
+  if (report.error) return report.error;
   const skipped = report.parts.reduce((n, p) => n + p.skipped.length, 0);
   const already = report.parts.reduce((n, p) => n + p.alreadyInFile.length, 0);
   const bits = [`From ${report.fileName}`];
@@ -64,6 +69,7 @@ export function skippedNote(item: { name: string; reason: string }): string {
 /** What "Copy report" copies. */
 export function reportText(report: Report): string {
   const lines = [`Dropkit report: ${reportTitle(report)}`, reportSubtitle(report), ''];
+  if (report.detail) lines.push(`Details: ${report.detail}`, '');
   for (const part of report.parts) {
     lines.push(`${PART_LABEL[part.part]}: ${partLine(part)}`);
     if (part.built.length) lines.push(`  Built: ${part.built.join(', ')}`);

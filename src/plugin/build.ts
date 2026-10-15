@@ -94,11 +94,11 @@ async function runPart(part: Part, d: Json, svgs: Map<string, Json>, run: PartRu
     case 'designSystem':
       return buildDesignSystem(d.designSystem as Json, run);
     case 'svgs':
-      return buildSvgs((d.svgs as unknown[]).filter(isObject), run);
+      return buildSvgs(d.svgs as unknown[], run);
     case 'components':
-      return buildComponents((d.components as unknown[]).filter(isObject), svgs, run);
+      return buildComponents(d.components as unknown[], svgs, run);
     case 'screens':
-      return buildScreens((d.screens as unknown[]).filter(isObject), svgs, run);
+      return buildScreens(d.screens as unknown[], svgs, run);
     case 'prototype':
       return buildPrototype(d.prototype as Json, run);
   }

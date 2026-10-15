@@ -15,6 +15,8 @@ export class BuildContext {
   /** Top-level frames by name (screens). Screens page first. */
   readonly screens = new Map<string, FrameNode>();
   readonly collections = new Map<string, VariableCollection>();
+  /** Colour mode name → mode id, set when the design system is built. */
+  readonly colorModes = new Map<string, string>();
   fonts: Font[] = [];
   private readonly loaded = new Set<string>();
   /** Things each part made in this build, for "Show". */

@@ -19,8 +19,8 @@ type Any = any;
 export interface MockOptions {
   plan?: 'free' | 'professional';
   fonts?: { family: string; style: string }[];
-  /** False: Figma drops variable links on gradient stops (to test the fallback). */
-  gradientLinks?: boolean;
+  /** false: Figma drops variable links on gradient stops; "refuse": it throws (to test the fallback). */
+  gradientLinks?: boolean | 'refuse';
   /** Extra pages besides "Page 1". */
   pages?: string[];
 }
@@ -109,6 +109,7 @@ export function createMockFigma(options: MockOptions = {}): MockFigma {
         const stops = p.gradientStops.map((s: Any) => {
           if (typeof s.position !== 'number' || typeof s.color?.a !== 'number') throw new Error(`in ${where}: Invalid color stop`);
           const out = { position: s.position, color: { ...s.color } } as Any;
+          if (s.boundVariables?.color && options.gradientLinks === 'refuse') throw new Error(`in ${where}: Invalid color stop: unexpected boundVariables`);
           if (s.boundVariables?.color && options.gradientLinks !== false) out.boundVariables = { color: { ...s.boundVariables.color } };
           return out;
         });

@@ -5,14 +5,17 @@ import { combinations, matches, plural, variantName, type Combination } from '..
 import { Missing, PAGES } from './context.ts';
 import { buildLayer, linkProps, pickVariant, type LayerScope, type PropLink } from './layers.ts';
 import { below } from './place.ts';
-import type { PartRun } from './run.ts';
+import { notBuildable, type PartRun } from './run.ts';
 
 type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const GAP = 24;
 
-export async function buildComponents(components: Json[], svgs: Map<string, Json>, run: PartRun): Promise<void> {
+/** `list` is the components as written, so item numbers match the checker's. */
+export async function buildComponents(list: unknown[], svgs: Map<string, Json>, run: PartRun): Promise<void> {
+  const components = list.filter((c): c is Json => isObject(c) && typeof c.name === 'string');
+  for (const [i, c] of list.entries()) if (!isObject(c) || typeof c.name !== 'string') await run.item(`component#${i}`, `Component ${i + 1}`, notBuildable);
   const { ctx } = run;
   const { page, warning } = await ctx.page(PAGES.components);
   if (warning) run.warn(warning);
@@ -21,7 +24,7 @@ export async function buildComponents(components: Json[], svgs: Map<string, Json
 
   for (const c of dependencyOrder(components)) {
     const name = c.name as string;
-    const index = components.indexOf(c);
+    const index = list.indexOf(c);
     const key = run.isSkipped(`component#${index}`) ? `component#${index}` : `component:${name}`;
     await run.item(key, name, async () => {
       if (ctx.components.has(name)) return 'already';

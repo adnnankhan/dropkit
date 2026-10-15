@@ -26,6 +26,8 @@ export interface ExistingComponent {
   variants: Record<string, string[]>;
   /** Other properties: name → type. */
   props: Record<string, 'text' | 'boolean' | 'swap'>;
+  /** The variant combinations that really exist in the set (some may be missing). */
+  combos?: Combination[];
 }
 
 /** Names already in the open Figma file. */
@@ -374,7 +376,7 @@ class Checker {
   /** Component info, from the JSON or the file. */
   private componentInfo(name: string): ComponentInfo | null {
     const file = this.fileComponents.get(name);
-    if (file) return { name, variants: file.variants, props: file.props, combos: combinations(file.variants) };
+    if (file) return { name, variants: file.variants, props: file.props, combos: file.combos ?? combinations(file.variants) };
     const json = this.components.get(name);
     if (json) return json;
     if (this.svgs.has(name)) return { name, variants: {}, props: {}, combos: [{}] };
@@ -546,7 +548,7 @@ class Checker {
     if (!(ENUMS.gradientType as readonly unknown[]).includes(value.type)) {
       this.error(owner, where, `${owner.label} needs "type": "linear", "radial" or "angular".`);
     }
-    if (value.angle !== undefined && !isNumber(value.angle)) this.warn(where, `${owner.label} has an "angle" that isn’t a number. It will use 0.`);
+    if (value.angle !== undefined && !isNumber(value.angle)) this.warn(where, `${owner.label} has an "angle" that isn’t a number. It will run left to right (90).`);
     if (!Array.isArray(value.stops) || value.stops.length < 2) {
       this.error(owner, where, `${owner.label} needs at least 2 "stops".`);
       return;
@@ -927,7 +929,10 @@ class Checker {
     if (fields.absolute === true && parentLayout !== 'auto') {
       this.warn(at, `${label}: "absolute" only matters inside a parent with "layout". It will be ignored.`);
     }
-    if (fields.visibleProp !== undefined) this.propLink(ctx, at, label, 'visibleProp', fields.visibleProp, 'boolean');
+    if (fields.visibleProp !== undefined) {
+      if (parentLayout === 'root') this.warn(at, `${label}: "visibleProp" only works on layers inside the component, not on its top layer. It will be ignored.`);
+      else this.propLink(ctx, at, label, 'visibleProp', fields.visibleProp, 'boolean');
+    }
 
     if (type === 'frame') {
       this.enumField(at, label, 'layout', fields.layout, ENUMS.layout);
@@ -994,7 +999,7 @@ class Checker {
         this.error(ctx.owner, at, `${ctx.owner.label}: ${label} needs a "component" name.`);
       }
       const compName = isString(layer.component) ? layer.component : null;
-      if (fields.component !== undefined && compName && fields === layer) this.uses(c, at, 'component', compName);
+      if (isString(fields.component)) this.uses(c, at, 'component', fields.component);
       const info = compName ? this.componentInfo(compName) : null;
       if (info && ctx.component && info.name === ctx.component.name) {
         this.error(ctx.owner, at, `${ctx.owner.label} can’t contain an instance of itself.`);

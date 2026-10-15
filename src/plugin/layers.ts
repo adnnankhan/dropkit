@@ -3,7 +3,7 @@
 // Order matters in Figma (HANDOFF lesson 8): set a frame's layout before its children,
 // append a node to its parent before FILL sizing, and set sizing after resize().
 import { propName } from '../shared/format.ts';
-import { gradientLinksStuck, gradientPaint } from './build-design-system.ts';
+import { setGradient } from './build-design-system.ts';
 import { Missing, colourPaint, solid, type BuildContext } from './context.ts';
 
 type Json = Record<string, unknown>;
@@ -95,22 +95,23 @@ async function text(layer: Json, scope: LayerScope): Promise<TextNode> {
   const { ctx } = scope;
   const node = figma.createText();
   try {
-    const style = textStyle(ctx, layer.textStyle);
     const runs = Array.isArray(layer.runs) ? (layer.runs.filter((r) => isObject(r) && typeof r.text === 'string') as Json[]) : [];
     const characters = runs.length ? runs.map((r) => r.text as string).join('') : typeof layer.text === 'string' ? layer.text : '';
 
     // Every font used must be loaded before the text or its styles change (HANDOFF lesson 9).
+    // A text style already in the file can use a font that isn't installed here: then the
+    // text uses Inter without that style, with a warning (FORMAT.md, "Fonts").
+    const style = await usableStyle(textStyle(ctx, layer.textStyle), layer, scope);
     const base = style ? (style.fontName as FontName) : ctx.fontFor('Inter', 400, false);
     await ctx.loadFont(base);
-    for (const run of runs) {
-      const s = textStyle(ctx, run.textStyle);
-      if (s) await ctx.loadFont(s.fontName as FontName);
-    }
+    const runStyles = new Map<Json, TextStyle | null>();
+    for (const run of runs) runStyles.set(run, await usableStyle(textStyle(ctx, run.textStyle), layer, scope));
     node.fontName = base;
     node.characters = characters;
     if (style) await node.setTextStyleIdAsync(style.id);
     if (layer.fill !== undefined) await fill(node, layer.fill, scope);
-    if (layer.decoration) node.textDecoration = layer.decoration === 'underline' ? 'UNDERLINE' : 'STRIKETHROUGH';
+    const decoration = DECORATION[layer.decoration as string];
+    if (decoration) node.textDecoration = decoration;
     const align = ({ left: 'LEFT', center: 'CENTER', right: 'RIGHT', justify: 'JUSTIFIED' } as const)[layer.align as 'left'];
     if (align) node.textAlignHorizontal = align;
 
@@ -118,23 +119,40 @@ async function text(layer: Json, scope: LayerScope): Promise<TextNode> {
     for (const run of runs) {
       const end = at + (run.text as string).length;
       if (end > at) {
-        const s = textStyle(ctx, run.textStyle);
+        const s = runStyles.get(run);
         if (s) await node.setRangeTextStyleIdAsync(at, end, s.id);
-        if (run.fill !== undefined) node.setRangeFills(at, end, [colourPaint(ctx, run.fill as string)]);
-        if (run.decoration) node.setRangeTextDecoration(at, end, run.decoration === 'underline' ? 'UNDERLINE' : 'STRIKETHROUGH');
-        if (typeof run.link === 'string') node.setRangeHyperlink(at, end, { type: 'URL', value: run.link });
+        if (typeof run.fill === 'string') node.setRangeFills(at, end, [colourPaint(ctx, run.fill)]);
+        const runDecoration = DECORATION[run.decoration as string];
+        if (runDecoration) node.setRangeTextDecoration(at, end, runDecoration);
+        if (typeof run.link === 'string' && /^(https?:\/\/|mailto:)/i.test(run.link)) node.setRangeHyperlink(at, end, { type: 'URL', value: run.link });
       }
       at = end;
     }
-    if (layer.truncate === true || typeof layer.truncate === 'number') {
+    const lines = layer.truncate === true ? 1 : typeof layer.truncate === 'number' && layer.truncate >= 1 ? Math.floor(layer.truncate) : null;
+    if (lines !== null) {
       node.textTruncation = 'ENDING';
-      node.maxLines = typeof layer.truncate === 'number' ? layer.truncate : 1;
+      node.maxLines = lines;
     }
     if (typeof layer.textProp === 'string') scope.links.push({ node, field: 'characters', prop: layer.textProp });
     return node;
   } catch (error) {
     node.remove();
     throw error;
+  }
+}
+
+const DECORATION: Record<string, TextDecoration> = { underline: 'UNDERLINE', strikethrough: 'STRIKETHROUGH' };
+
+/** The style, when its font can be loaded; null (with a warning) when it can't. */
+async function usableStyle(style: TextStyle | null, layer: Json, scope: LayerScope): Promise<TextStyle | null> {
+  if (!style) return null;
+  const font = style.fontName as FontName;
+  try {
+    await scope.ctx.loadFont(font);
+    return style;
+  } catch {
+    scope.warn(`Text style “${style.name}” uses the font “${font.family} ${font.style}”, which isn’t installed, so “${String(layer.name ?? 'text')}” uses Inter instead.`);
+    return null;
   }
 }
 
@@ -155,7 +173,10 @@ export function pickVariant(target: ComponentNode | ComponentSetNode, variant?: 
     (child): child is ComponentNode =>
       child.type === 'COMPONENT' && Object.entries(want).every(([prop, value]) => child.variantProperties?.[prop] === value),
   );
-  return match ?? target.defaultVariant;
+  if (match) return match;
+  // Asked for a variant the set doesn't have: say so, never quietly use another one.
+  if (variant && Object.keys(variant).length) throw new Missing('variant', `${target.name}: ${Object.entries(variant).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+  return target.defaultVariant;
 }
 
 async function instance(layer: Json, scope: LayerScope): Promise<InstanceNode> {
@@ -237,15 +258,26 @@ async function image(layer: Json, scope: LayerScope): Promise<RectangleNode> {
 
 // ── Fields ────────────────────────────────────────────────────────────
 
-/** Sets a number field from a number or a number variable name (linked to the variable). */
+/**
+ * Sets a number field from a number or a number variable name (linked to the variable).
+ * null removes the value (FORMAT.md). Anything else is ignored, as the checker said.
+ */
 function setNumber(node: SceneNode, field: NumberField, value: unknown, ctx: BuildContext): void {
-  if (typeof value === 'number') {
-    (node as unknown as Record<string, number>)[field] = value;
+  const target = node as unknown as Record<string, number>;
+  if (value === null) {
+    if (field === 'width' || field === 'height') return;
+    if ((node as SceneNode & { boundVariables?: Record<string, unknown> }).boundVariables?.[field]) node.setBoundVariable(field, null);
+    target[field] = 0;
     return;
   }
+  if (typeof value === 'number') {
+    if (Number.isFinite(value) && value >= 0) target[field] = value;
+    return;
+  }
+  if (typeof value !== 'string') return;
   const variable = ctx.numberVars.get(value as string);
   if (!variable) throw new Missing('token', String(value));
-  if (field !== 'width' && field !== 'height') (node as unknown as Record<string, number>)[field] = ctx.numberValue(variable);
+  if (field !== 'width' && field !== 'height') target[field] = ctx.numberValue(variable);
   node.setBoundVariable(field, variable);
 }
 
@@ -266,8 +298,9 @@ function autoLayout(node: FrameNode | ComponentNode, layer: Json, scope: LayerSc
   node.layoutMode = layer.layout === 'row' ? 'HORIZONTAL' : 'VERTICAL';
   if (layer.gap === 'auto') node.primaryAxisAlignItems = 'SPACE_BETWEEN';
   else if (layer.gap !== undefined) setNumber(node, 'itemSpacing', layer.gap, ctx);
-  if (layer.padding !== undefined) {
-    const p = Array.isArray(layer.padding) ? layer.padding : [layer.padding];
+  const padding = Array.isArray(layer.padding) ? layer.padding : layer.padding === undefined ? null : [layer.padding];
+  if (padding && [1, 2, 4].includes(padding.length)) {
+    const p = padding;
     const [top, right, bottom, left] = p.length === 1 ? [p[0], p[0], p[0], p[0]] : p.length === 2 ? [p[0], p[1], p[0], p[1]] : p;
     setNumber(node, 'paddingTop', top, ctx);
     setNumber(node, 'paddingRight', right, ctx);
@@ -307,7 +340,7 @@ function size(node: SceneNode, layer: Json, inAutoLayout: boolean, scope: LayerS
     if (value === 'hug') return ownAuto || isText ? 'HUG' : null;
     if (own !== null) return ownAuto || inAutoLayout ? 'FIXED' : null;
     // An auto layout frame without a size hugs its content.
-    return ownAuto && node.type === 'FRAME' ? 'HUG' : null;
+    return ownAuto && (node.type === 'FRAME' || node.type === 'COMPONENT') ? 'HUG' : null;
   };
   const horizontal = mode(layer.width, width);
   const vertical = mode(layer.height, height);
@@ -327,11 +360,12 @@ async function appearance(node: SceneNode, layer: Json, scope: LayerScope): Prom
       setNumber(node, 'strokeWeight', s.width ?? 1, ctx);
       const align = ({ inside: 'INSIDE', center: 'CENTER', outside: 'OUTSIDE' } as const)[s.align as 'inside'];
       if (align && 'strokeAlign' in node) node.strokeAlign = align;
-      if (Array.isArray(s.dash) && 'dashPattern' in node) node.dashPattern = s.dash as number[];
+      if (Array.isArray(s.dash) && s.dash.every((n) => typeof n === 'number' && n >= 0) && 'dashPattern' in node) node.dashPattern = s.dash as number[];
     }
   }
-  if (layer.radius !== undefined && 'topLeftRadius' in node) {
-    const r = Array.isArray(layer.radius) ? layer.radius : [layer.radius, layer.radius, layer.radius, layer.radius];
+  const radius = Array.isArray(layer.radius) ? layer.radius : layer.radius === undefined ? null : [layer.radius, layer.radius, layer.radius, layer.radius];
+  if (radius && radius.length === 4 && 'topLeftRadius' in node) {
+    const r = radius;
     setNumber(node, 'topLeftRadius', r[0], ctx);
     setNumber(node, 'topRightRadius', r[1], ctx);
     setNumber(node, 'bottomRightRadius', r[2], ctx);
@@ -342,7 +376,7 @@ async function appearance(node: SceneNode, layer: Json, scope: LayerScope): Prom
     if (!style) throw new Missing('effect', layer.effect);
     await node.setEffectStyleIdAsync(style.id);
   }
-  if (typeof layer.opacity === 'number' && 'opacity' in node) node.opacity = layer.opacity;
+  if (typeof layer.opacity === 'number' && layer.opacity >= 0 && layer.opacity <= 1 && 'opacity' in node) node.opacity = layer.opacity;
   if (typeof layer.visible === 'boolean') node.visible = layer.visible;
   if (typeof layer.clip === 'boolean' && 'clipsContent' in node) node.clipsContent = layer.clip;
 }
@@ -355,12 +389,14 @@ async function fill(node: SceneNode, value: unknown, scope: LayerScope): Promise
     return;
   }
   if (isObject(value)) {
-    const { paint, unlinked } = gradientPaint(ctx, value);
-    node.fills = [paint];
-    if (unlinked && !gradientLinksStuck((node.fills as Paint[])[0])) node.fills = [gradientPaint(ctx, value, false).paint];
+    const target = node as GeometryMixin;
+    if (!setGradient(ctx, value, (paint) => (target.fills = [paint]), () => (target.fills as Paint[])[0])) {
+      scope.warn(`“${node.name}” uses colour values in its gradient, not linked variables: Figma doesn’t keep variable links on gradient stops.`);
+    }
     return;
   }
-  const name = value as string;
+  if (typeof value !== 'string') return;
+  const name = value;
   if (name.startsWith('#') || ctx.colorVars.has(name)) {
     node.fills = [colourPaint(ctx, name)];
     return;
@@ -374,7 +410,8 @@ async function fill(node: SceneNode, value: unknown, scope: LayerScope): Promise
 export function linkProps(links: PropLink[], keys: Map<string, string>): void {
   for (const link of links) {
     const key = keys.get(link.prop);
-    if (!key) continue;
+    // Only layers inside the component can link to its props, not the component itself.
+    if (!key || link.node.type === 'COMPONENT') continue;
     link.node.componentPropertyReferences = { ...(link.node.componentPropertyReferences ?? {}), [link.field]: key };
   }
 }

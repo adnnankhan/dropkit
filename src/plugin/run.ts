@@ -12,6 +12,11 @@ export interface Controls {
 
 export const STOPPED = 'Stopped before it was built.';
 
+/** For items the checker always skips (not a { } block, or no name): never runs. */
+export async function notBuildable(): Promise<never> {
+  throw new Error('This item can’t be built.');
+}
+
 export class PartRun {
   readonly ctx: BuildContext;
   readonly report: PartReport;
@@ -43,6 +48,8 @@ export class PartRun {
       return false;
     }
     this.controls.onItem(this.report.part, label);
+    // Let Figma deliver messages (Stop) and draw progress between items.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     try {
       const result = await build();
       if (result === 'already') this.report.alreadyInFile.push(label);

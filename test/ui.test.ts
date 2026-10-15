@@ -58,7 +58,8 @@ function openWindow({ selectCopyWorks = true, clipboardApiWorks = false, mock = 
   (mock.figma.ui as Any).postMessage = (message: unknown) => {
     setTimeout(() => window.dispatchEvent(new window.MessageEvent('message', { data: { pluginMessage: message } })), 0);
   };
-  runInNewContext(code, { figma: mock.figma, __html__: '', console });
+  // Figma's plugin sandbox has setTimeout; the plugin uses it to let Stop through between items.
+  runInNewContext(code, { figma: mock.figma, __html__: '', console, setTimeout });
 
   const document = window.document;
   const $ = <T extends HTMLElement>(selector: string) => document.querySelector(selector) as T;
@@ -386,5 +387,30 @@ describe('window: copying', () => {
       w.copied[0],
       'The Figma plugin can’t read my JSON file: Line 60: a comma is missing after “radius/md”. Please fix it and send me the whole corrected file.',
     );
+  });
+});
+
+describe('window: never stuck', () => {
+  it('when the names in the Figma file can’t be read, the check still finishes, with a warning', async () => {
+    const mock = createMockFigma();
+    (mock.figma as Any).loadAllPagesAsync = async () => {
+      throw new Error('boom');
+    };
+    const w = openWindow({ mock });
+    await w.dropAndCheck('example.json', example);
+    assert.match(w.text('#problem-list'), /couldn’t read the names already in this Figma file/);
+  });
+
+  it('when the build fails as a whole, the report says so instead of hanging', async () => {
+    const mock = createMockFigma();
+    const w = openWindow({ mock });
+    await w.dropAndCheck('example.json', example);
+    (mock.figma as Any).loadAllPagesAsync = async () => {
+      throw new Error('boom');
+    };
+    w.click('#main-button');
+    await w.until(() => w.visible('view-done'), 'the report');
+    assert.equal(w.text('#done-title'), 'Build stopped');
+    assert.match(w.text('#done-subtitle'), /something went wrong. Please try again/);
   });
 });

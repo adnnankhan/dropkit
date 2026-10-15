@@ -143,7 +143,7 @@ function renderProgress(fraction: number, rows: ProgressRow[]): void {
 function renderReport(report: Report): void {
   $('done-title').textContent = reportTitle(report);
   $('done-subtitle').textContent = reportSubtitle(report);
-  const partial = report.stopped || report.parts.some((p) => p.skipped.length > 0);
+  const partial = report.stopped || !!report.error || report.parts.some((p) => p.skipped.length > 0);
   $('done-icon').classList.toggle('done-icon--partial', partial);
   $('report-list').replaceChildren(
     ...report.parts.map((part) => {
@@ -181,10 +181,11 @@ function show(view: View): void {
   if (view === 'paste') pasteBox.focus();
 }
 
-function requestCheck(): void {
+/** fresh: a newly read file (the plugin collects the names in the Figma file again). */
+function requestCheck(fresh: boolean): void {
   state.result = null;
   state.checkId++;
-  post({ type: 'check', id: state.checkId, data: state.data, ticked: ticked() });
+  post({ type: 'check', id: state.checkId, data: state.data, ticked: ticked(), fresh });
 }
 
 function readText(text: string, fileName: string): void {
@@ -194,7 +195,7 @@ function readText(text: string, fileName: string): void {
     state.problem = '';
     state.data = result.data;
     show('read');
-    requestCheck();
+    requestCheck(true);
     render();
   } else {
     state.problem = describeProblem(result);
@@ -282,7 +283,7 @@ copyButton($('copy-report'), () => (state.report ? reportText(state.report) : ''
 
 for (const box of partBoxes) {
   box.addEventListener('change', () => {
-    if (state.view === 'read') requestCheck();
+    if (state.view === 'read') requestCheck(false);
     render();
   });
 }

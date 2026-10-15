@@ -2,7 +2,7 @@
 // reactions API (HANDOFF lesson 1). The same link is never added twice.
 import { matches, plural, type Combination } from '../shared/format.ts';
 import { Missing } from './context.ts';
-import type { PartRun } from './run.ts';
+import { notBuildable, type PartRun } from './run.ts';
 
 type Json = Record<string, unknown>;
 const isObject = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -21,13 +21,18 @@ export async function buildPrototype(p: Json, run: PartRun): Promise<void> {
       if (!screen) throw new Missing('screen', start);
       const page = pageOf(screen);
       if (page.flowStartingPoints.some((f) => f.nodeId === screen.id)) return 'already';
-      page.flowStartingPoints = [...page.flowStartingPoints, { nodeId: screen.id, name: start }];
+      // First in the list, so it's the prototype's default start.
+      page.flowStartingPoints = [{ nodeId: screen.id, name: start }, ...page.flowStartingPoints];
       ctx.remember('prototype', screen);
       return 'built';
     });
   }
 
-  for (const [i, link] of (Array.isArray(p.links) ? (p.links as Json[]) : []).entries()) {
+  for (const [i, link] of (Array.isArray(p.links) ? (p.links as unknown[]) : []).entries()) {
+    if (!isObject(link)) {
+      await run.item(`link:${i}`, `Link ${i + 1}`, notBuildable);
+      continue;
+    }
     const label = linkLabel(link, i);
     await run.item(`link:${i}`, label, async () => {
       const from = ctx.screens.get(link.from as string);
@@ -43,7 +48,11 @@ export async function buildPrototype(p: Json, run: PartRun): Promise<void> {
     });
   }
 
-  for (const [i, link] of (Array.isArray(p.componentLinks) ? (p.componentLinks as Json[]) : []).entries()) {
+  for (const [i, link] of (Array.isArray(p.componentLinks) ? (p.componentLinks as unknown[]) : []).entries()) {
+    if (!isObject(link)) {
+      await run.item(`componentLink:${i}`, `Component link ${i + 1}`, notBuildable);
+      continue;
+    }
     const label = `${String(link.component)}: ${combo(link.from)} → ${combo(link.to)}`;
     await run.item(`componentLink:${i}`, label, async () => {
       const target = ctx.components.get(link.component as string);
@@ -52,13 +61,18 @@ export async function buildPrototype(p: Json, run: PartRun): Promise<void> {
       const variants = target.children.filter((c): c is ComponentNode => c.type === 'COMPONENT');
       const from = (isObject(link.from) ? link.from : {}) as Combination;
       const to = (isObject(link.to) ? link.to : {}) as Combination;
-      let added = 0;
+      // Find every variant and layer first, so a missing one leaves nothing half-linked.
+      const pairs: { node: SceneNode; destination: ComponentNode }[] = [];
       for (const source of variants.filter((v) => matches(v.variantProperties ?? {}, from))) {
         const want = { ...(source.variantProperties ?? {}), ...to };
         const destination = variants.find((v) => matches(v.variantProperties ?? {}, want) && matches(want, v.variantProperties ?? {}));
         if (!destination || destination === source) continue;
         const node = typeof link.layer === 'string' ? findPath(source, link.layer) : source;
         if (!node) throw new Missing('layer', String(link.layer));
+        pairs.push({ node, destination });
+      }
+      let added = 0;
+      for (const { node, destination } of pairs) {
         const change: Action = { type: 'NODE', destinationId: destination.id, navigation: 'CHANGE_TO', transition: transition(link) };
         if (await addReaction(node as SceneNode & ReactionMixin, { trigger: trigger(link), actions: [change] })) added++;
       }
@@ -88,14 +102,25 @@ function pageOf(node: BaseNode): PageNode {
   return (current as PageNode) ?? figma.currentPage;
 }
 
-/** A layer by name, or by "Parent/Child" path when names repeat. */
+/**
+ * A layer by name, or by "Parent/Child" path when names repeat. Like the checker, it looks
+ * at the layers the JSON made, not inside instances (their insides belong to the component).
+ */
 export function findPath(root: SceneNode, path: string): SceneNode | null {
-  if (!('findAll' in root)) return null;
-  const whole = root.findAll((n) => n.name === path);
+  const named = (node: SceneNode, name: string): SceneNode[] => {
+    const out: SceneNode[] = [];
+    if (!('children' in node) || node.type === 'INSTANCE') return out;
+    for (const child of node.children) {
+      if (child.name === name) out.push(child);
+      out.push(...named(child, name));
+    }
+    return out;
+  };
+  const whole = named(root, path);
   if (whole.length >= 1) return whole[0];
   let current: SceneNode[] = [root];
   for (const segment of path.split('/')) {
-    current = current.flatMap((n) => ('findAll' in n ? n.findAll((c) => c.name === segment) : []));
+    current = current.flatMap((n) => named(n, segment));
     if (current.length === 0) return null;
   }
   return current[0] ?? null;

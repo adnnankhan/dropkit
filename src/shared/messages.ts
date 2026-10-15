@@ -4,7 +4,8 @@ import type { Part } from './format.ts';
 import type { Report } from './report.ts';
 
 export type ToPlugin =
-  | { type: 'check'; id: number; data: unknown; ticked: Part[] }
+  /** fresh: a newly read file, so the names in the Figma file are collected again. */
+  | { type: 'check'; id: number; data: unknown; ticked: Part[]; fresh: boolean }
   | { type: 'build'; data: unknown; ticked: Part[]; fileName: string }
   | { type: 'stop' }
   | { type: 'show'; part: Part }

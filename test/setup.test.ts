@@ -35,7 +35,7 @@ describe('plugin code', () => {
 
   it('opens a 360 × 720 window that follows the Figma theme, and touches nothing else', () => {
     const mock = createMockFigma();
-    runInNewContext(code, { figma: mock.figma, __html__: '<html></html>' });
+    runInNewContext(code, { figma: mock.figma, __html__: '<html></html>', setTimeout });
     assert.equal(mock.calls.showUI.length, 1);
     assert.equal(mock.calls.showUI[0].html, '<html></html>');
     // Spread copies the options out of the sandbox, so they compare as plain objects.
@@ -126,5 +126,30 @@ describe('instructions web page (step 5)', async () => {
 
   it('the plugin’s "Open as web page" points to the published page', () => {
     assert.ok(readProjectFile('dist/ui.html').includes('https://adnnankhan.github.io/dropkit/'));
+  });
+});
+
+describe('release zip (step 6)', async () => {
+  const { zip } = await import('../scripts/zip.mjs');
+  const { inflateRawSync } = await import('node:zlib');
+
+  it('makes a zip whose files unpack to the same bytes', () => {
+    const files = [
+      { name: 'dropkit/manifest.json', data: Buffer.from(readProjectFile('manifest.json')) },
+      { name: 'dropkit/dist/ui.html', data: Buffer.from(readProjectFile('dist/ui.html')) },
+    ];
+    const archive = zip(files);
+    assert.equal(archive.readUInt32LE(0), 0x04034b50, 'starts with a file header');
+    assert.equal(archive.readUInt32LE(archive.length - 22), 0x06054b50, 'ends with the directory');
+    assert.equal(archive.readUInt16LE(archive.length - 12), 2, 'two files');
+    let at = 0;
+    for (const file of files) {
+      const size = archive.readUInt32LE(at + 18);
+      const nameLength = archive.readUInt16LE(at + 26);
+      assert.equal(archive.subarray(at + 30, at + 30 + nameLength).toString(), file.name);
+      const data = inflateRawSync(archive.subarray(at + 30 + nameLength, at + 30 + nameLength + size));
+      assert.ok(data.equals(file.data), file.name);
+      at += 30 + nameLength + size;
+    }
   });
 });
