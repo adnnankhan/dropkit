@@ -42,9 +42,9 @@ describe('plugin code', () => {
     assert.deepEqual({ ...mock.calls.showUI[0].options }, { width: 360, height: 720, themeColors: true });
   });
 
-  it('the strict mock fails on anything it doesn’t know, like building on the canvas', () => {
+  it('the strict mock fails on anything it doesn’t know', () => {
     const { figma } = createMockFigma();
-    assert.throws(() => figma.createFrame(), /Mock Figma: figma.createFrame was used/);
+    assert.throws(() => (figma as unknown as { createSlice(): void }).createSlice(), /Mock Figma: figma.createSlice was used/);
   });
 
   it('has no eval or new Function, in the plugin or the window', () => {

@@ -8,6 +8,9 @@
 <body>
 <div class="app">
 
+<!-- States 1–4 and 7: choose what to build and add a file -->
+<div class="stack" id="setup">
+
 <section class="section">
   <h2 class="label">Instructions for your AI</h2>
   <p class="secondary">Copy these into any AI with your design idea. It will write the JSON file for you.</p>
@@ -16,7 +19,6 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
       <span class="button-text">Copy instructions</span>
     </button>
-    <!-- Placeholder until step 5 publishes the page. -->
     <a href="#" id="open-web-page">Open as web page</a>
   </div>
 </section>
@@ -51,7 +53,7 @@
   <textarea id="json-paste" class="paste" spellcheck="false"></textarea>
 </section>
 
-<!-- File read (step 1 stand-in for state 3) -->
+<!-- States 3 and 4: file read and checked -->
 <section class="section" id="view-read" hidden>
   <h2 class="label">JSON file</h2>
   <div class="file">
@@ -61,8 +63,23 @@
   </div>
   <a href="#" class="align-start" data-action="show-paste">Paste JSON instead</a>
 </section>
-<section class="section section--last section--grow" id="view-read-result" hidden>
-  <p>File read. Checking comes in step 2.</p>
+<section class="section section--last section--grow section--scroll" id="view-read-result" hidden>
+  <p class="secondary" id="checking">Checking the file…</p>
+  <div class="stack-8" id="result-ok" hidden>
+    <div class="row row--tight">
+      <svg class="icon-success" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.7 2.7L16 9.8"></path></svg>
+      <h2 class="label label--success">No problems found</h2>
+    </div>
+    <p class="secondary" id="counts"></p>
+  </div>
+  <div class="stack-8" id="result-problems" hidden>
+    <h2 class="label" id="problems-title"></h2>
+    <ul class="problem-list" id="problem-list"></ul>
+    <button type="button" class="button align-start copy-error" id="copy-problems">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+      <span class="button-text">Copy problems for your AI</span>
+    </button>
+  </div>
 </section>
 
 <!-- State 7: can't read -->
@@ -86,8 +103,45 @@
   </button>
 </section>
 
-<footer class="footer">
+</div>
+
+<!-- State 5: building -->
+<div class="stack" id="view-building" hidden>
+  <section class="section section--building">
+    <h2 class="label" id="building-title"></h2>
+    <div class="progress" role="progressbar" aria-label="Build progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <p class="secondary">Keep this window open until it finishes.</p>
+  </section>
+  <section class="section section--last section--grow section--list section--scroll">
+    <ul class="part-list" id="building-list"></ul>
+  </section>
+</div>
+
+<!-- State 6: done -->
+<div class="stack" id="view-done" hidden>
+  <section class="section section--done">
+    <svg class="icon-success done-icon" id="done-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.7 2.7L16 9.8"></path></svg>
+    <div class="stack-2">
+      <h2 class="title" id="done-title"></h2>
+      <p class="secondary" id="done-subtitle"></p>
+    </div>
+  </section>
+  <section class="section section--last section--grow section--list section--scroll">
+    <ul class="part-list part-list--report" id="report-list"></ul>
+  </section>
+</div>
+
+<footer class="footer" id="footer-setup">
   <button type="button" class="button-primary" id="main-button" disabled>Add a file to build</button>
+</footer>
+<footer class="footer" id="footer-building" hidden>
+  <button type="button" class="button button--wide" id="stop-button">Stop after this step</button>
+</footer>
+<footer class="footer footer--pair" id="footer-done" hidden>
+  <button type="button" class="button button--wide" id="copy-report"><span class="button-text">Copy report</span></button>
+  <button type="button" class="button-primary" id="build-another">Build another file</button>
 </footer>
 
 </div>

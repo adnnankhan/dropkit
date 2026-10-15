@@ -26,6 +26,11 @@
   --danger-icon: var(--figma-color-icon-danger, #B42318);
   --danger-bg: var(--figma-color-bg-danger-tertiary, #FEF3F2);
   --danger-line: var(--figma-color-border-danger-strong, #B42318);
+  --warning: var(--figma-color-text-warning, #8A5300);
+  --warning-icon: var(--figma-color-icon-warning, #8A5300);
+  --success: var(--figma-color-text-success, #067647);
+  --success-icon: var(--figma-color-icon-success, #067647);
+  --waiting-icon: var(--figma-color-icon-disabled, #C4C4C4);
 
   --font: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -54,6 +59,11 @@
   --danger-icon: var(--figma-color-icon-danger, #FF8A80);
   --danger-bg: var(--figma-color-bg-danger-tertiary, #4A2624);
   --danger-line: var(--figma-color-border-danger-strong, #FF8A80);
+  --warning: var(--figma-color-text-warning, #F5B544);
+  --warning-icon: var(--figma-color-icon-warning, #F5B544);
+  --success: var(--figma-color-text-success, #5FD38D);
+  --success-icon: var(--figma-color-icon-success, #5FD38D);
+  --waiting-icon: var(--figma-color-icon-disabled, #666666);
   color-scheme: dark;
 }
 
@@ -239,3 +249,83 @@ a:hover { text-decoration-thickness: 2px; }
   padding: var(--space);
   border-top: 1px solid var(--line);
 }
+
+/* Groups of sections that swap as a whole: setup, building, done */
+.stack {
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.stack-8 { display: flex; flex-direction: column; gap: 8px; }
+.stack-2 { display: flex; flex-direction: column; gap: 2px; }
+.row--tight { gap: 8px; }
+.section--scroll { overflow-y: auto; }
+
+.title { margin: 0; font-size: 13px; font-weight: 600; line-height: 20px; }
+.label--success { color: var(--success); }
+.icon-success { flex-shrink: 0; color: var(--success-icon); }
+
+/* State 4: problems */
+.problem-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.problem-row { display: flex; gap: 8px; align-items: flex-start; overflow-wrap: anywhere; }
+.problem-row svg { flex-shrink: 0; }
+.problem-row--error svg { color: var(--danger-icon); }
+.problem-row--warning svg { color: var(--warning-icon); }
+
+/* State 5: building */
+.section--building { gap: 10px; }
+.progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-fill {
+  width: 0;
+  height: 4px;
+  background: var(--brand);
+  transition: width 0.2s ease-out;
+}
+.section--list { padding: 8px var(--space); gap: 0; }
+.part-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.part-row {
+  min-height: 48px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+.part-row svg { flex-shrink: 0; }
+.part-name { font-weight: 500; }
+.part-detail { color: var(--text-secondary); }
+.part-row--done svg { color: var(--success-icon); }
+.part-row--active svg { color: var(--brand); }
+.part-row--active .track { stroke: var(--line); }
+.part-row--waiting { color: var(--text-secondary); }
+.part-row--waiting svg { color: var(--waiting-icon); }
+
+/* State 6: done */
+.section--done { flex-direction: row; gap: 10px; align-items: flex-start; }
+.done-icon--partial { color: var(--warning-icon); }
+.part-list--report .part-row {
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.part-list--report .part-row:last-child { border-bottom: 0; }
+.part-body { flex-grow: 1; min-width: 0; overflow-wrap: anywhere; }
+.part-notes { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.part-notes .note--skipped { color: var(--danger); }
+.part-notes .note--warning { color: var(--warning); }
+
+.footer--pair { display: flex; gap: 8px; }
+.footer--pair > * { flex: 1 1 0; }
+.button--wide { width: 100%; justify-content: center; }
