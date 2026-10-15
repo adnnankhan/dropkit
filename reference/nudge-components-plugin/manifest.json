@@ -1,0 +1,8 @@
+{
+  "name": "Nudge · design system components (final)",
+  "id": "nudge-ds-components-final-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page"
+}

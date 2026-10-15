@@ -1,0 +1,240 @@
+/*
+  Colours come from Figma's theme (figma.showUI with themeColors: true adds the
+  --figma-color-* variables and a figma-light / figma-dark class on <html>).
+  The second value in each var() is the mockup's stand-in, used only when the page
+  is opened outside Figma, for example in a browser preview.
+*/
+:root {
+  --bg: var(--figma-color-bg, #FFFFFF);
+  --bg-secondary: var(--figma-color-bg-secondary, #F5F5F5);
+  --control-bg: var(--figma-color-bg, #FFFFFF);
+  --text: var(--figma-color-text, #1E1E1E);
+  --text-secondary: var(--figma-color-text-secondary, #6B6B6B);
+  --icon-secondary: var(--figma-color-icon-secondary, #6B6B6B);
+  --line: var(--figma-color-border, #E6E6E6);
+  --drop-line: var(--figma-color-border-disabled-strong, #C4C4C4);
+  --link: var(--figma-color-text-brand, #0A6CC2);
+  --brand: var(--figma-color-bg-brand, #0A6CC2);
+  --brand-hover: var(--figma-color-bg-brand-hover, #08589F);
+  --on-brand: var(--figma-color-text-onbrand, #FFFFFF);
+  --focus: var(--figma-color-border-selected, #0A6CC2);
+  --hover: var(--figma-color-bg-hover, #F5F5F5);
+  --disabled-bg: var(--figma-color-bg-disabled, #EDEDED);
+  --disabled-text: var(--figma-color-text-disabled, #6B6B6B);
+  --danger: var(--figma-color-text-danger, #B42318);
+  --danger-icon: var(--figma-color-icon-danger, #B42318);
+  --danger-bg: var(--figma-color-bg-danger-tertiary, #FEF3F2);
+  --danger-line: var(--figma-color-border-danger-strong, #B42318);
+
+  --font: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --space: 16px;
+  --control-height: 32px;
+  --radius: 6px;
+  color-scheme: light;
+}
+
+.figma-dark {
+  --bg: var(--figma-color-bg, #2C2C2C);
+  --bg-secondary: var(--figma-color-bg-secondary, #383838);
+  --control-bg: var(--figma-color-bg-secondary, #383838);
+  --text: var(--figma-color-text, #FFFFFF);
+  --text-secondary: var(--figma-color-text-secondary, #B3B3B3);
+  --icon-secondary: var(--figma-color-icon-secondary, #B3B3B3);
+  --line: var(--figma-color-border, #444444);
+  --drop-line: var(--figma-color-border-disabled-strong, #666666);
+  --link: var(--figma-color-text-brand, #7CC4FF);
+  --brand: var(--figma-color-bg-brand, #0A6CC2);
+  --focus: var(--figma-color-border-selected, #0D99FF);
+  --hover: var(--figma-color-bg-hover, #383838);
+  --disabled-bg: var(--figma-color-bg-disabled, #444444);
+  --disabled-text: var(--figma-color-text-disabled, #8C8C8C);
+  --danger: var(--figma-color-text-danger, #FF8A80);
+  --danger-icon: var(--figma-color-icon-danger, #FF8A80);
+  --danger-bg: var(--figma-color-bg-danger-tertiary, #4A2624);
+  --danger-line: var(--figma-color-border-danger-strong, #FF8A80);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 12px/16px var(--font);
+}
+
+[hidden] { display: none !important; }
+
+p { margin: 0; }
+
+a { color: var(--link); }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  padding: var(--space);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.section--last { border-bottom: 0; }
+.section--grow { flex-grow: 1; min-height: 0; }
+.section--parts { gap: 4px; }
+.section--parts .label { margin-bottom: 4px; }
+
+.label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.secondary { color: var(--text-secondary); }
+
+.row { display: flex; align-items: center; gap: 12px; }
+.row--between { justify-content: space-between; }
+.align-start { align-self: flex-start; }
+
+.button {
+  height: var(--control-height);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--control-bg);
+  color: var(--text);
+  font: 500 12px var(--font);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.button:hover { background: var(--hover); }
+
+.button-primary {
+  width: 100%;
+  height: var(--control-height);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: var(--on-brand);
+  font: 500 12px var(--font);
+  cursor: pointer;
+}
+.button-primary:hover { background: var(--brand-hover); }
+.button-primary:disabled {
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  cursor: default;
+}
+
+.icon-button {
+  width: var(--control-height);
+  height: var(--control-height);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--icon-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.icon-button:hover { background: var(--hover); }
+
+.check {
+  height: var(--control-height);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.check input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.drop-zone {
+  flex-grow: 1;
+  border: 1px dashed var(--drop-line);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--icon-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: var(--space);
+}
+.drop-zone.is-over { border-style: solid; border-color: var(--focus); }
+.drop-title { color: var(--text); font-weight: 500; }
+
+.paste {
+  flex-grow: 1;
+  resize: none;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: 11px/16px var(--mono);
+}
+.paste:focus,
+.paste:focus-visible {
+  border-color: var(--focus);
+  outline: 1px solid var(--focus);
+  outline-offset: 0;
+}
+
+.file {
+  height: 40px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file-icon { flex-shrink: 0; color: var(--icon-secondary); }
+.file-name {
+  flex-grow: 1;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.file--error { border-color: var(--danger-line); background: var(--danger-bg); }
+.file--error .file-icon { color: var(--danger-icon); }
+
+.problem {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+.problem-icon { flex-shrink: 0; color: var(--danger-icon); }
+.problem-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.problem-title { font-weight: 600; color: var(--danger); }
+.copy-error { margin-top: 4px; }
+
+.footer {
+  padding: var(--space);
+  border-top: 1px solid var(--line);
+}

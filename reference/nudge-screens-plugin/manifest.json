@@ -1,0 +1,8 @@
+{
+  "name": "Nudge · build all screens (final)",
+  "id": "nudge-build-all-screens-final-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page"
+}

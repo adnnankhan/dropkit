@@ -1,0 +1,609 @@
+{
+  "format": "dropkit/0.1",
+  "name": "Example · Tasks app",
+  "designSystem": {
+    "modes": [
+      "Light",
+      "Dark"
+    ],
+    "colors": {
+      "brand/500": "#4F46E5",
+      "bg/primary": {
+        "Light": "#FFFFFF",
+        "Dark": "#0E0E10"
+      },
+      "bg/secondary": {
+        "Light": "#F2F2F5",
+        "Dark": "#1C1C1F"
+      },
+      "text/primary": {
+        "Light": "#111113",
+        "Dark": "#F4F4F5"
+      },
+      "text/secondary": {
+        "Light": "#6B6B73",
+        "Dark": "#A1A1AA"
+      },
+      "border/hairline": {
+        "Light": "#0000001A",
+        "Dark": "#FFFFFF1A"
+      },
+      "button/primary/bg": "brand/500",
+      "button/primary/text": "#FFFFFF"
+    },
+    "gradients": {
+      "Brand/Sunrise": {
+        "type": "linear",
+        "angle": 90,
+        "stops": [
+          {
+            "color": "brand/500",
+            "at": 0
+          },
+          {
+            "color": "#F97316",
+            "at": 1
+          }
+        ]
+      }
+    },
+    "spacing": {
+      "space/1": 4,
+      "space/2": 8,
+      "space/3": 12,
+      "space/4": 16,
+      "space/6": 24
+    },
+    "radius": {
+      "radius/sm": 8,
+      "radius/md": 12
+      "radius/full": 999
+    },
+    "sizes": {
+      "size/touch": 44,
+      "size/icon": 24
+    },
+    "textStyles": {
+      "Title": {
+        "font": "Inter",
+        "weight": 700,
+        "size": 28,
+        "lineHeight": 34,
+        "letterSpacing": -0.5
+      },
+      "Headline": {
+        "font": "Inter",
+        "weight": 600,
+        "size": 17,
+        "lineHeight": 22
+      },
+      "Body": {
+        "font": "Inter",
+        "weight": 400,
+        "size": 17,
+        "lineHeight": 22
+      },
+      "Caption": {
+        "font": "Inter",
+        "weight": 500,
+        "size": 13,
+        "lineHeight": 18
+      }
+    },
+    "effects": {
+      "Shadow/Card": [
+        {
+          "type": "dropShadow",
+          "color": "#00000014",
+          "x": 0,
+          "y": 4,
+          "blur": 16,
+          "spread": 0
+        }
+      ],
+      "Glass/Bar": [
+        {
+          "type": "backgroundBlur",
+          "radius": 24
+        },
+        {
+          "type": "dropShadow",
+          "color": "#0000001F",
+          "x": 0,
+          "y": 8,
+          "blur": 24,
+          "spread": 0
+        }
+      ]
+    }
+  },
+  "svgs": [
+    {
+      "name": "Icon/check",
+      "component": true,
+      "color": "text/primary",
+      "svg": "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M5 12.5l4.5 4.5L19 7' stroke='#000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+    },
+    {
+      "name": "Icon/plus",
+      "component": true,
+      "color": "text/primary",
+      "svg": "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M12 5v14M5 12h14' stroke='#000' stroke-width='2' stroke-linecap='round'/></svg>"
+    },
+    {
+      "name": "Icon/chevron-left",
+      "component": true,
+      "color": "text/primary",
+      "svg": "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'><path d='M15 5l-7 7 7 7' stroke='#000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+    }
+  ],
+  "components": [
+    {
+      "name": "Button",
+      "props": {
+        "Label": {
+          "type": "text",
+          "default": "Continue"
+        },
+        "Show icon": {
+          "type": "boolean",
+          "default": false
+        },
+        "Icon": {
+          "type": "swap",
+          "default": "Icon/plus"
+        }
+      },
+      "variants": {
+        "Style": [
+          "Primary",
+          "Secondary"
+        ],
+        "Size": [
+          "Large",
+          "Small"
+        ]
+      },
+      "base": {
+        "type": "frame",
+        "layout": "row",
+        "gap": "space/2",
+        "padding": [
+          0,
+          "space/6"
+        ],
+        "align": "center",
+        "justify": "center",
+        "width": "hug",
+        "height": 52,
+        "fill": "button/primary/bg",
+        "radius": "radius/md",
+        "children": [
+          {
+            "type": "instance",
+            "name": "Icon",
+            "component": "Icon/plus",
+            "width": 20,
+            "height": 20,
+            "color": "button/primary/text",
+            "swapProp": "Icon",
+            "visibleProp": "Show icon"
+          },
+          {
+            "type": "text",
+            "name": "Label",
+            "text": "Continue",
+            "textStyle": "Headline",
+            "fill": "button/primary/text",
+            "textProp": "Label"
+          }
+        ]
+      },
+      "rules": [
+        {
+          "when": {
+            "Style": "Secondary"
+          },
+          "set": {
+            "self": {
+              "fill": "bg/secondary"
+            },
+            "Label": {
+              "fill": "text/primary"
+            },
+            "Icon": {
+              "color": "text/primary"
+            }
+          }
+        },
+        {
+          "when": {
+            "Size": "Small"
+          },
+          "set": {
+            "self": {
+              "height": "size/touch",
+              "padding": [
+                0,
+                "space/4"
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Main action button. Small size keeps a 44px touch target."
+    },
+    {
+      "name": "Checkbox",
+      "variants": {
+        "Checked": [
+          "Off",
+          "On"
+        ]
+      },
+      "base": {
+        "type": "frame",
+        "width": "size/touch",
+        "height": "size/touch",
+        "layout": "row",
+        "align": "center",
+        "justify": "center",
+        "children": [
+          {
+            "type": "frame",
+            "name": "Box",
+            "width": 24,
+            "height": 24,
+            "radius": "radius/full",
+            "layout": "row",
+            "align": "center",
+            "justify": "center",
+            "stroke": {
+              "color": "border/hairline",
+              "width": 2,
+              "align": "inside"
+            },
+            "children": [
+              {
+                "type": "instance",
+                "name": "Tick",
+                "component": "Icon/check",
+                "width": 16,
+                "height": 16,
+                "color": "button/primary/text",
+                "visible": false
+              }
+            ]
+          }
+        ]
+      },
+      "rules": [
+        {
+          "when": {
+            "Checked": "On"
+          },
+          "set": {
+            "Box": {
+              "fill": "brand/500",
+              "stroke": null
+            },
+            "Tick": {
+              "visible": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Task row",
+      "props": {
+        "Title": {
+          "type": "text",
+          "default": "Task"
+        }
+      },
+      "variants": {
+        "State": [
+          "Open",
+          "Done"
+        ]
+      },
+      "base": {
+        "type": "frame",
+        "layout": "row",
+        "gap": "space/2",
+        "padding": [
+          0,
+          "space/2"
+        ],
+        "align": "center",
+        "width": 353,
+        "height": 56,
+        "fill": "bg/secondary",
+        "radius": "radius/md",
+        "children": [
+          {
+            "type": "instance",
+            "name": "Checkbox",
+            "component": "Checkbox",
+            "variant": {
+              "Checked": "Off"
+            }
+          },
+          {
+            "type": "text",
+            "name": "Title",
+            "text": "Task",
+            "textStyle": "Body",
+            "fill": "text/primary",
+            "width": "fill",
+            "textProp": "Title"
+          }
+        ]
+      },
+      "rules": [
+        {
+          "when": {
+            "State": "Done"
+          },
+          "set": {
+            "Checkbox": {
+              "variant": {
+                "Checked": "On"
+              }
+            },
+            "Title": {
+              "fill": "text/secondary",
+              "strikethrough": true
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "screens": [
+    {
+      "name": "Tasks",
+      "width": 393,
+      "height": 852,
+      "mode": "Light",
+      "fill": "bg/primary",
+      "children": [
+        {
+          "type": "text",
+          "name": "Title",
+          "x": 20,
+          "y": 64,
+          "text": "Today",
+          "textStyle": "Title",
+          "fill": "text/primary"
+        },
+        {
+          "type": "frame",
+          "name": "Task list",
+          "x": 20,
+          "y": 120,
+          "width": 353,
+          "height": "hug",
+          "layout": "column",
+          "gap": "space/2",
+          "children": [
+            {
+              "type": "instance",
+              "name": "Task 1",
+              "component": "Task row",
+              "variant": {
+                "State": "Open"
+              },
+              "props": {
+                "Title": "Call the bank"
+              },
+              "width": "fill"
+            },
+            {
+              "type": "instance",
+              "name": "Task 2",
+              "component": "Task row",
+              "variant": {
+                "State": "Done"
+              },
+              "props": {
+                "Title": "Send the invoice"
+              },
+              "width": "fill"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "Summary",
+          "x": 20,
+          "y": 256,
+          "textStyle": "Body",
+          "fill": "text/secondary",
+          "runs": [
+            {
+              "text": "1 of 2 tasks "
+            },
+            {
+              "text": "done",
+              "textStyle": "Headline",
+              "fill": "text/primary"
+            }
+          ]
+        },
+        {
+          "type": "rect",
+          "name": "Progress track",
+          "x": 20,
+          "y": 286,
+          "width": 353,
+          "height": 8,
+          "radius": "radius/full",
+          "fill": "bg/secondary"
+        },
+        {
+          "type": "rect",
+          "name": "Progress fill",
+          "x": 20,
+          "y": 286,
+          "width": 176,
+          "height": 8,
+          "radius": "radius/full",
+          "fill": "Brand/Sunrise"
+        },
+        {
+          "type": "instance",
+          "name": "Add task button",
+          "component": "Button",
+          "variant": {
+            "Style": "Primary",
+            "Size": "Large"
+          },
+          "props": {
+            "Label": "Add task",
+            "Show icon": true,
+            "Icon": "Icon/plus"
+          },
+          "x": 20,
+          "y": 766,
+          "width": 353
+        }
+      ]
+    },
+    {
+      "name": "New task",
+      "width": 393,
+      "height": 852,
+      "mode": "Light",
+      "fill": "bg/primary",
+      "children": [
+        {
+          "type": "instance",
+          "name": "Back button",
+          "component": "Button",
+          "variant": {
+            "Style": "Secondary",
+            "Size": "Small"
+          },
+          "props": {
+            "Label": "Back",
+            "Show icon": true,
+            "Icon": "Icon/chevron-left"
+          },
+          "x": 16,
+          "y": 56
+        },
+        {
+          "type": "text",
+          "name": "Title",
+          "x": 20,
+          "y": 120,
+          "text": "New task",
+          "textStyle": "Title",
+          "fill": "text/primary"
+        },
+        {
+          "type": "frame",
+          "name": "Task name field",
+          "x": 20,
+          "y": 176,
+          "width": 353,
+          "height": 52,
+          "layout": "row",
+          "padding": [
+            0,
+            "space/4"
+          ],
+          "align": "center",
+          "fill": "bg/secondary",
+          "radius": "radius/md",
+          "children": [
+            {
+              "type": "text",
+              "name": "Placeholder",
+              "text": "What needs doing?",
+              "textStyle": "Body",
+              "fill": "text/secondary"
+            }
+          ]
+        },
+        {
+          "type": "instance",
+          "name": "Save button",
+          "component": "Button",
+          "variant": {
+            "Style": "Primary",
+            "Size": "Large"
+          },
+          "props": {
+            "Label": "Save"
+          },
+          "x": 20,
+          "y": 766,
+          "width": 353
+        }
+      ]
+    }
+  ],
+  "prototype": {
+    "start": "Tasks",
+    "links": [
+      {
+        "from": "Tasks",
+        "layer": "Add task button",
+        "on": "tap",
+        "action": "navigate",
+        "to": "New task",
+        "transition": "push",
+        "direction": "left",
+        "duration": 300,
+        "easing": "easeOut"
+      },
+      {
+        "from": "New task",
+        "layer": "Back button",
+        "on": "tap",
+        "action": "back"
+      },
+      {
+        "from": "New task",
+        "layer": "Save button",
+        "on": "tap",
+        "action": "navigate",
+        "to": "Tasks",
+        "transition": "smartAnimate",
+        "duration": 250,
+        "easing": "easeInOut"
+      }
+    ],
+    "componentLinks": [
+      {
+        "component": "Checkbox",
+        "from": {
+          "Checked": "Off"
+        },
+        "on": "tap",
+        "to": {
+          "Checked": "On"
+        },
+        "transition": "smartAnimate",
+        "duration": 200,
+        "easing": "gentle"
+      },
+      {
+        "component": "Checkbox",
+        "from": {
+          "Checked": "On"
+        },
+        "on": "tap",
+        "to": {
+          "Checked": "Off"
+        },
+        "transition": "smartAnimate",
+        "duration": 200,
+        "easing": "gentle"
+      }
+    ]
+  }
+}

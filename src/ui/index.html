@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dropkit</title>
+<style>/* INLINE_CSS */</style>
+</head>
+<body>
+<div class="app">
+
+<section class="section">
+  <h2 class="label">Instructions for your AI</h2>
+  <p class="secondary">Copy these into any AI with your design idea. It will write the JSON file for you.</p>
+  <div class="row">
+    <button type="button" class="button" id="copy-instructions">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+      <span class="button-text">Copy instructions</span>
+    </button>
+    <!-- Placeholder until step 5 publishes the page. -->
+    <a href="#" id="open-web-page">Open as web page</a>
+  </div>
+</section>
+
+<section class="section section--parts">
+  <h2 class="label">What to build</h2>
+  <label class="check"><input type="checkbox" name="part" value="designSystem" checked> Design system</label>
+  <label class="check"><input type="checkbox" name="part" value="components" checked> Components</label>
+  <label class="check"><input type="checkbox" name="part" value="screens" checked> Screens</label>
+  <label class="check"><input type="checkbox" name="part" value="svgs" checked> SVGs</label>
+  <label class="check"><input type="checkbox" name="part" value="prototype" checked> Prototype &amp; animations</label>
+</section>
+
+<!-- State 1: no file yet -->
+<section class="section section--last section--grow" id="view-empty">
+  <h2 class="label">JSON file</h2>
+  <div class="drop-zone" id="drop-zone">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"></path><path d="M7.5 8.5L12 4l4.5 4.5"></path><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
+    <p class="drop-title">Drop a .json file here</p>
+    <button type="button" class="button" id="choose-file">Choose file</button>
+    <a href="#" data-action="show-paste">Paste JSON instead</a>
+  </div>
+  <input type="file" id="file-input" accept=".json,application/json" hidden>
+</section>
+
+<!-- State 2: paste -->
+<section class="section section--last section--grow" id="view-paste" hidden>
+  <div class="row row--between">
+    <label for="json-paste" class="label">Paste JSON</label>
+    <a href="#" data-action="show-empty">Use a file instead</a>
+  </div>
+  <textarea id="json-paste" class="paste" spellcheck="false"></textarea>
+</section>
+
+<!-- File read (step 1 stand-in for state 3) -->
+<section class="section" id="view-read" hidden>
+  <h2 class="label">JSON file</h2>
+  <div class="file">
+    <svg class="file-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+    <span class="file-name" data-file-name></span>
+    <button type="button" class="icon-button" data-action="remove-file" aria-label="Remove file"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+  </div>
+  <a href="#" class="align-start" data-action="show-paste">Paste JSON instead</a>
+</section>
+<section class="section section--last section--grow" id="view-read-result" hidden>
+  <p>File read. Checking comes in step 2.</p>
+</section>
+
+<!-- State 7: can't read -->
+<section class="section section--last section--grow" id="view-error" hidden>
+  <h2 class="label">JSON file</h2>
+  <div class="file file--error">
+    <svg class="file-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+    <span class="file-name" data-file-name></span>
+    <button type="button" class="icon-button" data-action="remove-file" aria-label="Remove file"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+  </div>
+  <div class="problem" role="alert">
+    <svg class="problem-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6M9 9l6 6"></path></svg>
+    <div class="problem-text">
+      <p class="problem-title">Can’t read this file</p>
+      <p id="error-message"></p>
+    </div>
+  </div>
+  <button type="button" class="button align-start copy-error" id="copy-error">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>
+    <span class="button-text">Copy error for your AI</span>
+  </button>
+</section>
+
+<footer class="footer">
+  <button type="button" class="button-primary" id="main-button" disabled>Add a file to build</button>
+</footer>
+
+</div>
+<script>/* INLINE_JS */</script>
+</body>
+</html>
