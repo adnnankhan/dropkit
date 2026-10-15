@@ -100,3 +100,31 @@ describe('example files', () => {
     assert.match(readProjectFile('docs/FORMAT.md'), /`decoration` is `underline` or `strikethrough`/);
   });
 });
+
+describe('instructions web page (step 5)', async () => {
+  const { buildSite } = await import('../scripts/build-site.mjs');
+  const { readFileSync } = await import('node:fs');
+  const out = buildSite();
+  const site = (file: string) => readFileSync(join(out, file), 'utf8');
+
+  it('the plain text is exactly what "Copy instructions" copies', () => {
+    assert.equal(site('instructions.txt'), buildInstructions(root));
+  });
+
+  it('the page shows the same three files', () => {
+    const page = site('index.html');
+    assert.match(page, /<h1[^>]*>Instructions for the AI<\/h1>/);
+    assert.match(page, /<h1[^>]*>Dropkit JSON format v0.1<\/h1>/);
+    assert.ok(page.includes('&quot;name&quot;: &quot;Example · Tasks app&quot;'), 'the example file');
+    assert.doesNotMatch(page, /This is the text behind/);
+  });
+
+  it('has the privacy and help pages, pointing to GitHub Issues', () => {
+    assert.match(site('privacy.html'), /Privacy policy — Dropkit/);
+    assert.match(site('help.html'), /https:\/\/github.com\/adnnankhan\/dropkit\/issues/);
+  });
+
+  it('the plugin’s "Open as web page" points to the published page', () => {
+    assert.ok(readProjectFile('dist/ui.html').includes('https://adnnankhan.github.io/dropkit/'));
+  });
+});
