@@ -354,7 +354,7 @@
             },
             "Title": {
               "fill": "text/secondary",
-              "strikethrough": true
+              "decoration": "strikethrough"
             }
           }
         }

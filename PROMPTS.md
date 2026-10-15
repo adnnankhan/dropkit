@@ -62,7 +62,7 @@ Tests: example.json gives no errors; broken-missing-component.json gives exactly
 Stop when done and tell me what to try in Figma.
 ```
 
-**Test:** drop all three example files. Untick Prototype and drop `example.json` again: you should get the warning about prototype links. Try "Copy problems for your AI".
+**Test:** drop all three example files. Prototype starts unticked, so `example.json` should give the warning about prototype links; tick Prototype and drop it again, and the warning goes away. Try "Copy problems for your AI".
 
 ---
 

@@ -47,7 +47,7 @@ Errors and warnings also differ by icon (circle-x vs triangle), not just colour.
 1. A broken item is skipped; everything else is built. The report lists what was skipped.
 2. "Copy problems for your AI" copies every problem as plain text, ready to paste into an AI.
 3. "Stop after this step" finishes the item being built, then stops. Nothing is left half-made.
-4. All 5 boxes are ticked when the plugin opens.
+4. When the plugin opens, every box is ticked except Prototype & animations (changed by Adnan after step 1; it was all 5).
 
 ## Copy
 

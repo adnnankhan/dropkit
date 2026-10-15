@@ -89,3 +89,14 @@ describe('Copy instructions text', () => {
     assert.ok(ui.includes('Dropkit JSON format v0.1'));
   });
 });
+
+describe('example files', () => {
+  it('write strikethrough the way FORMAT.md says: "decoration": "strikethrough"', () => {
+    for (const file of ['examples/example.json', 'examples/broken-syntax.json', 'examples/broken-missing-component.json']) {
+      const text = readProjectFile(file);
+      assert.doesNotMatch(text, /"strikethrough"\s*:/, file);
+      assert.match(text, /"decoration"\s*:\s*"strikethrough"/, file);
+    }
+    assert.match(readProjectFile('docs/FORMAT.md'), /`decoration` is `underline` or `strikethrough`/);
+  });
+});

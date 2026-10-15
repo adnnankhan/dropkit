@@ -20,7 +20,8 @@
   --focus: var(--figma-color-border-selected, #0A6CC2);
   --hover: var(--figma-color-bg-hover, #F5F5F5);
   --disabled-bg: var(--figma-color-bg-disabled, #EDEDED);
-  --disabled-text: var(--figma-color-text-disabled, #6B6B6B);
+  /* Figma's own disabled text is too faint to read, so disabled buttons use secondary text. */
+  --disabled-text: var(--figma-color-text-secondary, #6B6B6B);
   --danger: var(--figma-color-text-danger, #B42318);
   --danger-icon: var(--figma-color-icon-danger, #B42318);
   --danger-bg: var(--figma-color-bg-danger-tertiary, #FEF3F2);
@@ -48,7 +49,7 @@
   --focus: var(--figma-color-border-selected, #0D99FF);
   --hover: var(--figma-color-bg-hover, #383838);
   --disabled-bg: var(--figma-color-bg-disabled, #444444);
-  --disabled-text: var(--figma-color-text-disabled, #8C8C8C);
+  --disabled-text: var(--figma-color-text-secondary, #B3B3B3);
   --danger: var(--figma-color-text-danger, #FF8A80);
   --danger-icon: var(--figma-color-icon-danger, #FF8A80);
   --danger-bg: var(--figma-color-bg-danger-tertiary, #4A2624);

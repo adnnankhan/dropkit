@@ -128,7 +128,7 @@ Components and screens are built from the same layers. A frame holds other layer
 | `type` | What it makes | Its own fields |
 | --- | --- | --- |
 | `frame` | A frame, with or without auto layout | Layout fields (below), `children` |
-| `text` | A text layer | `text` or `runs`, `textStyle`, `align`, `truncate` |
+| `text` | A text layer | `text` or `runs`, `textStyle`, `align`, `truncate`, `decoration` |
 | `rect` | A rectangle | — |
 | `ellipse` | A circle or oval | — |
 | `instance` | A copy of a component | `component`, `variant`, `props`, `color` |
@@ -178,7 +178,7 @@ Components and screens are built from the same layers. A frame holds other layer
 
 A run can set `textStyle`, `fill`, `decoration` and `link` (a web address). Anything it doesn't set comes from the layer.
 
-**Other text fields:** `align` is `left`, `center`, `right` or `justify`. `truncate` is `true` (one line) or a number of lines.
+**Other text fields:** `align` is `left`, `center`, `right` or `justify`. `truncate` is `true` (one line) or a number of lines. `decoration` is `underline` or `strikethrough`, as in text styles.
 
 **Instance fields:** `component` is the component's name. `variant` picks values, e.g. `{ "Style": "Primary" }`. `props` sets its properties, e.g. `{ "Label": "Save", "Show icon": true }`. `color` recolours an icon instance.
 
@@ -324,7 +324,7 @@ Every problem names the item and says what to fix, in plain words. "Copy problem
 
 - A ticked part that's missing from the file is simply skipped.
 - An unticked part is not built. Other parts can still use it if it already exists in the Figma file; if it doesn't, that's an error.
-- All 5 boxes are ticked when the plugin opens.
+- When the plugin opens, every box is ticked except Prototype & animations.
 
 **Running the same file again** skips anything whose name already exists, and lists it in the report as "already in file". A half-finished build can be finished this way.
 

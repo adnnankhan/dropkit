@@ -74,14 +74,14 @@ const example = readProjectFile('examples/example.json');
 const brokenSyntax = readProjectFile('examples/broken-syntax.json');
 
 describe('window: opening (state 1)', () => {
-  it('shows the 5 boxes, all ticked', () => {
+  it('shows the 5 boxes, all ticked except Prototype & animations', () => {
     const w = openWindow();
     const boxes = Array.from(w.document.querySelectorAll<HTMLInputElement>('input[name="part"]'));
     assert.deepEqual(
       boxes.map((box) => box.parentElement!.textContent!.trim()),
       ['Design system', 'Components', 'Screens', 'SVGs', 'Prototype & animations'],
     );
-    assert.ok(boxes.every((box) => box.checked));
+    assert.deepEqual(boxes.map((box) => box.checked), [true, true, true, true, false]);
   });
 
   it('shows the drop zone and a disabled "Add a file to build"', () => {
@@ -133,7 +133,7 @@ describe('window: paste (state 2)', () => {
     assert.ok(w.visible('view-read') && w.visible('view-read-result'));
     assert.equal(w.$('#view-read [data-file-name]').textContent, 'Pasted JSON');
     assert.equal(w.$('#view-read-result').textContent!.trim(), 'File read. Checking comes in step 2.');
-    assert.equal(w.button().textContent, 'Build 5 parts');
+    assert.equal(w.button().textContent, 'Build 4 parts');
     assert.ok(w.button().disabled);
   });
 
@@ -167,7 +167,7 @@ describe('window: adding a file', () => {
     w.drop(w.file('example.json', example));
     await w.until(() => w.visible('view-read'));
     assert.equal(w.$('#view-read [data-file-name]').textContent, 'example.json');
-    assert.equal(w.button().textContent, 'Build 5 parts');
+    assert.equal(w.button().textContent, 'Build 4 parts');
     assert.ok(w.button().disabled);
     assert.ok(w.visibleLink('Paste JSON instead'));
   });
@@ -209,9 +209,11 @@ describe('window: adding a file', () => {
     await w.until(() => w.visible('view-read'));
     const boxes = Array.from(w.document.querySelectorAll<HTMLInputElement>('input[name="part"]'));
     boxes[4].click();
-    assert.equal(w.button().textContent, 'Build 4 parts');
-    boxes.slice(1, 4).forEach((box) => box.click());
+    assert.equal(w.button().textContent, 'Build 5 parts');
+    boxes.slice(0, 4).forEach((box) => box.click());
     assert.equal(w.button().textContent, 'Build 1 part');
+    boxes[4].click();
+    assert.equal(w.button().textContent, 'Build 0 parts');
     assert.ok(w.button().disabled);
   });
 });
