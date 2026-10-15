@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=block">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="stage" id="stage">
+  <style>
+    .facts { position: absolute; left: 120px; top: 600px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; width: 1680px; }
+    .fact { background: var(--card); border-radius: 20px; padding: 40px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08); }
+    .fact b { display: block; font-size: 30px; line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 14px; }
+    .fact span { font-size: 22px; line-height: 1.5; color: var(--muted); }
+  </style>
+  <div style="position:absolute;left:120px;top:150px;width:1300px">
+    <div class="brand" style="margin-bottom:64px"><img src="../../icon/dropkit-icon.svg" alt=""><span>Dropkit</span></div>
+    <h1>No AI inside. Nothing you drop in is sent anywhere.</h1>
+  </div>
+  <div class="facts">
+    <div class="fact"><b>No account, no internet</b><span>Dropkit has no network access. It reads your file and builds in the Figma file you have open.</span></div>
+    <div class="fact"><b>Safe to run again</b><span>Anything already in the file is skipped, so nothing is duplicated, and a half-finished build can be finished.</span></div>
+    <div class="fact"><b>Works on the free plan</b><span>Colours are built with one mode there, because Figma allows one mode per collection. Never a workaround.</span></div>
+  </div>
+</div>
+<script type="module">
+import { ready } from './common.js';
+await ready();
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=block">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="stage" id="stage">
+  <div style="position:absolute;left:120px;top:150px;width:720px">
+    <div class="brand"><img src="../../icon/dropkit-icon.svg" alt=""><span>Dropkit</span></div>
+    <h1 style="margin-top:72px">Turn one JSON file into a design system, components, screens and a prototype in Figma.</h1>
+    <div class="pills">
+      <span class="pill">Any AI can write the file</span>
+      <span class="pill">Checked before it builds</span>
+      <span class="pill">No AI inside</span>
+    </div>
+  </div>
+  <div class="code" style="left:890px;top:250px;width:440px;font-size:17px"><div class="file">tasks-app.json</div><span class="p">{</span>
+  <span class="k">"format"</span><span class="p">:</span> <span class="s">"dropkit/0.1"</span><span class="p">,</span>
+  <span class="k">"designSystem"</span><span class="p">: {</span>
+    <span class="k">"colors"</span><span class="p">: {</span>
+      <span class="k">"brand/500"</span><span class="p">:</span> <span class="s">"#4F46E5"</span><span class="p">,</span>
+      <span class="k">"bg/primary"</span><span class="p">: {</span>
+        <span class="k">"Light"</span><span class="p">:</span> <span class="s">"#FFFFFF"</span><span class="p">,</span>
+        <span class="k">"Dark"</span><span class="p">:</span> <span class="s">"#0E0E10"</span>
+      <span class="p">},</span>
+  <span class="p">…</span>
+  <span class="k">"components"</span><span class="p">: […],</span>
+  <span class="k">"screens"</span><span class="p">: […],</span>
+  <span class="k">"prototype"</span><span class="p">: {…}</span>
+<span class="p">}</span></div>
+</div>
+<script type="module">
+import { plugin, tasksScreen, ready } from './common.js';
+const stage = document.getElementById('stage');
+await plugin(stage, { x: 1170, y: 158, scale: 1, state: 'done' });
+tasksScreen(stage, { x: 1560, y: 250, scale: 0.78 });
+await ready();
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=block">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="stage" id="stage">
+  <div style="position:absolute;left:120px;top:200px;width:640px">
+    <div class="brand" style="margin-bottom:80px"><img src="../../icon/dropkit-icon.svg" alt=""><span>Dropkit</span></div>
+    <p class="eyebrow">2 · Check</p>
+    <h2>Every problem in plain words, before anything is built</h2>
+    <p class="lead">Copy the problems back to your AI and it fixes the file. A broken item is only skipped; everything else still gets built.</p>
+  </div>
+  <div class="card" style="left:1290px;top:330px;width:520px;font-size:19px;line-height:1.55;color:#e4e4e7">
+    <h3>Copy problems for your AI</h3>
+    The Figma plugin found these problems in my JSON file. Please fix them and send me the whole corrected file.<br><br>
+    <span style="color:#ff8a80">1. Error:</span> Screen “New task” uses component “Text field”, which isn’t in the file or the JSON. This screen will be skipped.
+  </div>
+</div>
+<script type="module">
+import { plugin, ready } from './common.js';
+await plugin(document.getElementById('stage'), { x: 840, y: 120, scale: 1.1, state: 'checked-problems' });
+await ready();
+</script>
+</body>
+</html>

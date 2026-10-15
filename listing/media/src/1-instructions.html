@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=block">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="stage" id="stage">
+  <div style="position:absolute;left:120px;top:200px;width:640px">
+    <div class="brand" style="margin-bottom:80px"><img src="../../icon/dropkit-icon.svg" alt=""><span>Dropkit</span></div>
+    <p class="eyebrow">1 · Get the file</p>
+    <h2>Any AI writes the JSON for you</h2>
+    <p class="lead">Press <strong style="color:#fff">Copy instructions</strong>, paste them into the AI you already use with your design idea, and it writes the file. Or write it yourself.</p>
+  </div>
+  <div class="code" style="left:1290px;top:250px;width:520px;font-size:18px"><div class="file">tasks-app.json</div><span class="p">{</span>
+  <span class="k">"format"</span><span class="p">:</span> <span class="s">"dropkit/0.1"</span><span class="p">,</span>
+  <span class="k">"name"</span><span class="p">:</span> <span class="s">"Tasks app"</span><span class="p">,</span>
+  <span class="k">"designSystem"</span><span class="p">: {</span>
+    <span class="k">"modes"</span><span class="p">: [</span><span class="s">"Light"</span><span class="p">,</span> <span class="s">"Dark"</span><span class="p">],</span>
+    <span class="k">"colors"</span><span class="p">: {</span>
+      <span class="k">"brand/500"</span><span class="p">:</span> <span class="s">"#4F46E5"</span><span class="p">,</span>
+      <span class="k">"bg/primary"</span><span class="p">: {</span>
+        <span class="k">"Light"</span><span class="p">:</span> <span class="s">"#FFFFFF"</span><span class="p">,</span>
+        <span class="k">"Dark"</span><span class="p">:</span> <span class="s">"#0E0E10"</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="k">"spacing"</span><span class="p">: {</span> <span class="k">"space/4"</span><span class="p">:</span> <span class="n">16</span> <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="k">"components"</span><span class="p">: [ {</span> <span class="k">"name"</span><span class="p">:</span> <span class="s">"Button"</span><span class="p">, … } ],</span>
+  <span class="k">"screens"</span><span class="p">: [ {</span> <span class="k">"name"</span><span class="p">:</span> <span class="s">"Tasks"</span><span class="p">, … } ]</span>
+<span class="p">}</span></div>
+</div>
+<script type="module">
+import { plugin, ready } from './common.js';
+await plugin(document.getElementById('stage'), { x: 840, y: 120, scale: 1.1, state: 'empty' });
+await ready();
+</script>
+</body>
+</html>

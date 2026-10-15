@@ -56,6 +56,7 @@ npm test
 | `npm test` | Builds, type-checks and runs the tests against a strict mock of Figma |
 | `npm run site` | Builds the instructions, help and privacy pages into `site/` (published by GitHub Actions) |
 | `npm run release` | Builds `release/dropkit-v<version>.zip` (manifest.json + dist/) for a GitHub Release |
+| `npm run listing-images` | Makes the Figma Community cover and carousel images in `listing/media/` (needs Edge or Chrome) |
 
 | Path | What it is |
 | --- | --- |

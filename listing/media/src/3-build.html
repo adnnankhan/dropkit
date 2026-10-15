@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=block">
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="stage" id="stage">
+  <div style="position:absolute;left:120px;top:200px;width:560px">
+    <div class="brand" style="margin-bottom:80px"><img src="../../icon/dropkit-icon.svg" alt=""><span>Dropkit</span></div>
+    <p class="eyebrow">3 · Build</p>
+    <h2>Builds what you tick, in order</h2>
+    <p class="lead">Design system, SVGs, components, screens and prototype. Stop any time: the item being built is finished first. Run it again and nothing is duplicated.</p>
+  </div>
+  <svg class="arrow" style="left:1236px;top:520px" width="72" height="40" viewBox="0 0 72 40" fill="none"><path d="M4 20h60M48 6l16 14-16 14" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+<script type="module">
+import { plugin, ready } from './common.js';
+const stage = document.getElementById('stage');
+await plugin(stage, { x: 780, y: 120, scale: 1.1, state: 'building' });
+await plugin(stage, { x: 1330, y: 120, scale: 1.1, state: 'done' });
+await ready();
+</script>
+</body>
+</html>

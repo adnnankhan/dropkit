@@ -6,3 +6,4 @@ dist/
 .preview/
 site/
 release/
+listing/media/src/data.json
